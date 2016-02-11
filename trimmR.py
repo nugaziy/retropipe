@@ -139,13 +139,15 @@ def trim_reads(filename1, filename2, inputdir, outputdir, mist, primer, ad1, ad2
 	
 	count = np.array([0, 0, 0])
 	elem = ('primer', 'ad', 'green')
-	
+	count_reads = {'readname':readsname, 'all':0, 'good':0, 'bad':0, 'primer':0, 'ad':0, 'green':0}
 	for zipi in log_progress(zip(original_R1_reads, original_R2_reads), name = readsname, every = 1):
+		count_reads['all'] += 1
 		r1,r2 = zipi
 		fr1 = trim_primers(r1, primer, mist)
 		if fr1['good']:
 			fr2 = trim_ads(r2, ad1, ad2, barlen, mist)
 			if fr2['good']:
+				count_reads['good'] += 1
 				goodread = str(r2.format('fastq'))
 				goodread = goodread.split('\n')
 				goodread[0] = goodread[0] + ' barcode:' + str(fr2['barcode'])
@@ -174,8 +176,20 @@ def trim_reads(filename1, filename2, inputdir, outputdir, mist, primer, ad1, ad2
 	badr1.close()
 	badr2.close()
 	
+	count_reads['primer'] = count[0]
+	count_reads['ad'] = count[1]
+	count_reads['green'] = count[2]
+	
+	count_reads['good'] = round((count_reads['good'] / count_reads['all']), 2)
+	count_reads['bad'] = round((1 - count_reads['good']), 2)
 	count_elem = concate(elem, (np.char.mod('%d', count)))
-	print ('Mistake: place-amount: ' + count_elem + ' for ' + readsname + '\n')
+	print ('For ' + readsname + ': mistake(place-amount) = ' + count_elem + ';	')
+	print ('reads: {0:d}, good: {1:.2f}, bad: {2:.2f}\n'.format(count_reads['all'],
+                                                                    count_reads['good'],
+                                                                    count_reads['bad']
+                                                                   )
+          )
+	return (count_reads)
 
 
 
@@ -206,13 +220,26 @@ def main(inputdir, outputdir, mist, primer, ad1, ad2, barlen):
 	
 	nonconform_files = nonconform_files + list(r2_files.values())
 	
+	statistics = open(outputdir + 'statistics.txt', 'w')
+	statistics.write('readname\t' + 'reads\t' + 'good.pt\t' + 'bad.pt\t' + 'primer\t' + 'ad\t' + 'green\n')
 	for pair in conform_files:
 		filename1 = str(pair[0])
 		filename2 = str(pair[1])
-		responses = trim_reads(filename1, filename2,
+		stat_out = trim_reads(filename1, filename2,
                                             inputdir, outputdir, mist,
                                             primer, ad1, ad2, barlen)
+		statistics.write(stat_out['readname'] + '\t' + 
+                         str(stat_out['all']) + '\t' + 
+                         str(stat_out['good']) + '\t' + 
+                         str(stat_out['bad']) + '\t' + 
+                         str(stat_out['primer']) + '\t' + 
+                         str(stat_out['ad']) + '\t' + 
+                         str(stat_out['green']) + '\t' + 
+                         '\n')
 	
+	statistics.close()
+	
+
 	if len(nonconform_files) != 0:
 		print ('I can\'t read this files' + str(nonconform_files))
 
