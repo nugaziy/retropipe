@@ -88,7 +88,7 @@ def trim_reads(filename1, filename2, inputdir, outputdir, mist, primer, ad1, ad2
 	count = np.array([0, 0, 0])
 	elem = ('primer', 'ad', 'green')
 	count_reads = {'readname':readsname, 'all':0, 'good':0, 'bad':0, 'primer':0, 'ad':0, 'green':0}
-	for zipi in log_progress(zip(original_R1_reads, original_R2_reads), name = readsname, every = 1):
+	for zipi in log_progress(zip(original_R1_reads, original_R2_reads), name = readsname, size = count_fastq_records(inputdir + filename1), every = 1):
 		count_reads['all'] += 1
 		r1,r2 = zipi
 		fr1 = trim_primers(r1, primer, mist)
@@ -142,6 +142,9 @@ def trim_reads(filename1, filename2, inputdir, outputdir, mist, primer, ad1, ad2
 
 
 def main(inputdir, outputdir, mist, primer, ad1, ad2, barlen):
+	inputdir += "/"
+	outputdir += "/"
+
 	# Read files in folder
 	onlyfiles = [f for f in listdir(inputdir) if isfile(join(inputdir, f))]
 	
@@ -167,6 +170,9 @@ def main(inputdir, outputdir, mist, primer, ad1, ad2, barlen):
 		else: nonconform_files.append(r1_files[key])
 	
 	nonconform_files = nonconform_files + list(r2_files.values())
+
+	if not os.path.exists(outputdir):
+		os.makedirs(outputdir)
 	
 	statistics = open(outputdir + 'statistics.txt', 'w')
 	statistics.write('readname\t' + 'reads\t' + 'good.pt\t' + 'bad.pt\t' + 'primer\t' + 'ad\t' + 'green\n')
