@@ -34,10 +34,7 @@ def log_progress(sequence, name, every=None, size=None):
                     label.value = name + ': ' + '{index} reads / ?'.format(index=index)
                 else:
                     progress.value = index
-                    label.value = u'{index} / {size}'.format(
-                    index=index,
-                        size=size
-                    )
+                    label.value = u'{name}: {index} / {size}'.format(name=name, index=index, size=size)
             yield record
     except:
         progress.bar_style = 'danger'
