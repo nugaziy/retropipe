@@ -88,7 +88,7 @@ def trim_reads(filename1, filename2, inputdir, outputdir, mist, primer, ad1, ad2
     count = np.array([0, 0, 0])
     elem = ('primer', 'ad', 'green')
     count_reads = {'readname':readsname, 'all':0, 'good':0, 'bad':0, 'primer':0, 'ad':0, 'green':0}
-    for zipi in log_progress(zip(original_R1_reads, original_R2_reads), name = readsname, size = count_fastq_records(inputdir + filename1), every = 1):
+    for zipi in log_progress(zip(original_R1_reads, original_R2_reads), name = readsname, size = count_fastq_records(inputdir + filename1), every = 250):
         count_reads['all'] += 1
         r1,r2 = zipi
         fr1 = trim_primers(r1, primer, mist)
