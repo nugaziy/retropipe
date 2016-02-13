@@ -17,13 +17,10 @@ def hamming (x1, x2, m):
 
 
 
-def trim_primers(record, primer, m):
-    record = str(record.format('fastq'))
-    record = record.split('\n')
-    record = record[1]
+def trim_primers(record_seq, primer, m):
     badgood = {'good':False, 'bad':np.array([0, 0, 0])}
     len_primer = len(primer)
-    ham_prim = (hamming(primer, record[0:len_primer], m))or(hamming(primer, record[1:(len_primer+1)], m))
+    ham_prim = (hamming(primer, record_seq[0:len_primer], m))or(hamming(primer, record_seq[1:(len_primer+1)], m))
     if ham_prim:
         badgood['good'] = True
     else:
@@ -32,24 +29,21 @@ def trim_primers(record, primer, m):
 
 
 
-def trim_ads(record, ad1, ad2, barlen, m):
-    record = str(record.format('fastq'))
-    record = record.split('\n')
-    record = record[1]
+def trim_ads(record_seq, ad1, ad2, barlen, m):
     badgood = {'good':False, 'bad':np.array([0, 0, 0]), 'barcode':None}
     len_ad1 = len(ad1)
     len_ad2 = len(ad2)
-    seq1 = record[0:len_ad1]
-    seq1_shift = record[1:(len_ad1+1)]
-    seq2 = record[(len_ad1+barlen):(len_ad1+barlen+len_ad2)]
-    seq2_shift = record[(len_ad1+barlen+1):(len_ad1+barlen+len_ad2+1)]
+    seq1 = record_seq[0:len_ad1]
+    seq1_shift = record_seq[1:(len_ad1+1)]
+    seq2 = record_seq[(len_ad1+barlen):(len_ad1+barlen+len_ad2)]
+    seq2_shift = record_seq[(len_ad1+barlen+1):(len_ad1+barlen+len_ad2+1)]
     ham_ad1 = (hamming(ad1, seq1, m))or(hamming(ad1, seq1_shift, m))
     ham_ad2 = (hamming(ad2, seq2, m))or(hamming(ad1, seq2_shift, m))
     if (ham_ad1)and(ham_ad2):
         badgood['good'] = True
         if hamming(ad2, seq2, m) > hamming(ad1, seq2_shift, m):
-            badgood['barcode'] = record[len_ad1:(len_ad1+barlen)]
-        else: badgood['barcode'] = record[(len_ad1+1):(len_ad1+barlen+1)]
+            badgood['barcode'] = record_seq[len_ad1:(len_ad1+barlen)]
+        else: badgood['barcode'] = record_seq[(len_ad1+1):(len_ad1+barlen+1)]
     else:
         if not((ham_ad1)or(ham_ad2)):
             badgood['bad'] = np.array([0, 1, 1])
@@ -88,12 +82,11 @@ def trim_reads(filename1, filename2, inputdir, outputdir, mist, primer, ad1, ad2
     count = np.array([0, 0, 0])
     elem = ('primer', 'ad', 'green')
     count_reads = {'readname':readsname, 'all':0, 'good':0, 'bad':0, 'primer':0, 'ad':0, 'green':0}
-    for zipi in log_progress(zip(original_R1_reads, original_R2_reads), name = readsname, size = count_fastq_records(inputdir + filename1), every = 250):
+    for r1, r2 in log_progress(zip(original_R1_reads, original_R2_reads), name = readsname, size = count_fastq_records(inputdir + filename1), every = 250):
         count_reads['all'] += 1
-        r1,r2 = zipi
-        fr1 = trim_primers(r1, primer, mist)
+        fr1 = trim_primers(r1.seq, primer, mist)
         if fr1['good']:
-            fr2 = trim_ads(r2, ad1, ad2, barlen, mist)
+            fr2 = trim_ads(r2.seq, ad1, ad2, barlen, mist)
             if fr2['good']:
                 count_reads['good'] += 1
                 goodread = str(r2.format('fastq'))
