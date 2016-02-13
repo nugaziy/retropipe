@@ -176,12 +176,10 @@ def main(inputdir, outputdir, mist, primer, ad1, ad2, barlen):
     
     statistics = open(outputdir + 'statistics.txt', 'w')
     statistics.write('readname\t' + 'reads\t' + 'good.pt\t' + 'bad.pt\t' + 'primer\t' + 'ad\t' + 'green\n')
-    for pair in conform_files:
-        filename1 = str(pair[0])
-        filename2 = str(pair[1])
+    for filename1, filename2 in conform_files:
         stat_out = trim_reads(filename1, filename2,
-                                            inputdir, outputdir, mist,
-                                            primer, ad1, ad2, barlen)
+                              inputdir, outputdir, mist,
+                              primer, ad1, ad2, barlen)
         statistics.write(stat_out['readname'] + '\t' + 
                          str(stat_out['all']) + '\t' + 
                          str(stat_out['good']) + '\t' + 
