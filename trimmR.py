@@ -119,27 +119,40 @@ def trim_reads(filename1, filename2, inputdir, outputdir, mist, primer, ad1, ad2
             if fr2['good']:
                 count_reads['good'] += 1
                 
-                goodread1 = str(r1.format('fastq'))
-                goodread1 = goodread1.split('\n')
-                goodread1[0] = goodread1[0] + ' alu.seq:' + str(fr1['alu'])
-                goodread1[1] = str(fr1['flank'])
-                goodread1 = '\n'.join(goodread1)
+                r1.description += ' alu.seq:' + str(fr1['alu'])
+                r1 = r1[start_r1:end_r1] # HERE! http://biopython.org/DIST/docs/tutorial/Tutorial.html#htoc286
                 
-                goodread2 = str(r2.format('fastq'))
-                goodread2 = goodread2.split('\n')
-                goodread2[0] = goodread2[0] + ' barcode:' + str(fr2['barcode'])
-                goodread2[1] = str(fr2['flank'])
-                goodread2 = '\n'.join(goodread2)
+                r2.description += ' barcode:' + str(fr2['barcode'])
+                r2 = r2[start_r2:end_r2]
+                goodr1.write(r1)
+                goodr2.write(r2)
                 
-                goodr1.write(goodread1)
-                goodr2.write(goodread2)
+                #goodread1 = str(r1.format('fastq'))
+                #goodread1 = goodread1.split('\n')
+                #goodread1[0] = goodread1[0] + ' alu.seq:' + str(fr1['alu'])
+                #goodread1[1] = str(fr1['flank'])
+                #goodread1 = '\n'.join(goodread1)
+                
+                #goodread2 = str(r2.format('fastq'))
+                #goodread2 = goodread2.split('\n')
+                #goodread2[0] = goodread2[0] + ' barcode:' + str(fr2['barcode'])
+                #goodread2[1] = str(fr2['flank'])
+                #goodread2 = '\n'.join(goodread2)
+                
+                #goodr1.write(goodread1)
+                #goodr2.write(goodread2)
             else:
-                badread = str(r1.format('fastq'))
-                badread = badread.split('\n')
-                badread[0] = badread[0] + ' reason:' + concate(elem, (np.char.mod('%d', fr2['bad'])))
-                badread = '\n'.join(badread)
-                badr1.write(badread)
-                badr2.write(str(r2.format('fastq')))
+                r1.description += ' reason:' + concate(elem, (np.char.mod('%d', fr2['bad'])))
+                badr1.write(r1.format("fastq"))
+                badr2.write(r2.format("fastq"))
+                
+                #badread = str(r1.format('fastq'))
+                #badread = badread.split('\n')
+                #badread[0] = badread[0] + ' reason:' + concate(elem, (np.char.mod('%d', fr2['bad'])))
+                #badread = '\n'.join(badread)
+                #badr1.write(badread)
+                #badr2.write(str(r2.format('fastq')))
+                
                 count = np.sum([count, fr2['bad']], axis=0)
         else:
             badread = str(r1.format('fastq'))
