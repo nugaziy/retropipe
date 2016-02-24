@@ -212,15 +212,15 @@ def main(inputdir, outputdir, mist, primer, ad1, ad2, barlen, elem_remove):
         stat_out = trim_reads(filename1, filename2,
                               inputdir, outputdir, mist,
                               primer, ad1, ad2, barlen, elem_remove)
-        statistics.write(stat_out['readname'] + '\t' + 
-                         str(stat_out['all']) + '\t' + 
-                         str(stat_out['good']) + '\t' + 
-                         str(stat_out['bad']) + '\t' + 
-                         str(stat_out['primer']) + '\t' + 
-                         str(stat_out['ad']) + '\t' + 
-                         str(stat_out['green']) + '\t' + 
-                         str(stat_out['flank']) +
-                         '\n')
+        statistics.write("\t".join([stat_out['readname'], 
+                                   str(stat_out['all']), 
+                                   str(stat_out['good']),
+                                   str(stat_out['bad']),
+                                   str(stat_out['primer']),
+                                   str(stat_out['ad']),
+                                   str(stat_out['green']),
+                                   str(stat_out['flank'])]) +
+                                   '\n')
     
     statistics.close()
     
