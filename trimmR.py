@@ -119,27 +119,40 @@ def trim_reads(filename1, filename2, inputdir, outputdir, mist, primer, ad1, ad2
             if fr2['good']:
                 count_reads['good'] += 1
                 
-                goodread1 = str(r1.format('fastq'))
-                goodread1 = goodread1.split('\n')
-                goodread1[0] = goodread1[0] + ' alu.seq:' + str(fr1['alu'])
-                goodread1[1] = str(fr1['flank'])
-                goodread1 = '\n'.join(goodread1)
+                r1.description += ' alu.seq:' + str(fr1['alu'])
+                r1 = r1[start_r1:end_r1] # HERE! http://biopython.org/DIST/docs/tutorial/Tutorial.html#htoc286
                 
-                goodread2 = str(r2.format('fastq'))
-                goodread2 = goodread2.split('\n')
-                goodread2[0] = goodread2[0] + ' barcode:' + str(fr2['barcode'])
-                goodread2[1] = str(fr2['flank'])
-                goodread2 = '\n'.join(goodread2)
+                r2.description += ' barcode:' + str(fr2['barcode'])
+                r2 = r2[start_r2:end_r2]
+                goodr1.write(r1)
+                goodr2.write(r2)
                 
-                goodr1.write(goodread1)
-                goodr2.write(goodread2)
+                #goodread1 = str(r1.format('fastq'))
+                #goodread1 = goodread1.split('\n')
+                #goodread1[0] = goodread1[0] + ' alu.seq:' + str(fr1['alu'])
+                #goodread1[1] = str(fr1['flank'])
+                #goodread1 = '\n'.join(goodread1)
+                
+                #goodread2 = str(r2.format('fastq'))
+                #goodread2 = goodread2.split('\n')
+                #goodread2[0] = goodread2[0] + ' barcode:' + str(fr2['barcode'])
+                #goodread2[1] = str(fr2['flank'])
+                #goodread2 = '\n'.join(goodread2)
+                
+                #goodr1.write(goodread1)
+                #goodr2.write(goodread2)
             else:
-                badread = str(r1.format('fastq'))
-                badread = badread.split('\n')
-                badread[0] = badread[0] + ' reason:' + concate(elem, (np.char.mod('%d', fr2['bad'])))
-                badread = '\n'.join(badread)
-                badr1.write(badread)
-                badr2.write(str(r2.format('fastq')))
+                r1.description += ' reason:' + concate(elem, (np.char.mod('%d', fr2['bad'])))
+                badr1.write(r1.format("fastq"))
+                badr2.write(r2.format("fastq"))
+                
+                #badread = str(r1.format('fastq'))
+                #badread = badread.split('\n')
+                #badread[0] = badread[0] + ' reason:' + concate(elem, (np.char.mod('%d', fr2['bad'])))
+                #badread = '\n'.join(badread)
+                #badr1.write(badread)
+                #badr2.write(str(r2.format('fastq')))
+                
                 count = np.sum([count, fr2['bad']], axis=0)
         else:
             badread = str(r1.format('fastq'))
@@ -212,15 +225,15 @@ def main(inputdir, outputdir, mist, primer, ad1, ad2, barlen, elem_remove):
         stat_out = trim_reads(filename1, filename2,
                               inputdir, outputdir, mist,
                               primer, ad1, ad2, barlen, elem_remove)
-        statistics.write(stat_out['readname'] + '\t' + 
-                         str(stat_out['all']) + '\t' + 
-                         str(stat_out['good']) + '\t' + 
-                         str(stat_out['bad']) + '\t' + 
-                         str(stat_out['primer']) + '\t' + 
-                         str(stat_out['ad']) + '\t' + 
-                         str(stat_out['green']) + '\t' + 
-                         str(stat_out['flank']) +
-                         '\n')
+        statistics.write("\t".join([stat_out['readname'], 
+                                   str(stat_out['all']), 
+                                   str(stat_out['good']),
+                                   str(stat_out['bad']),
+                                   str(stat_out['primer']),
+                                   str(stat_out['ad']),
+                                   str(stat_out['green']),
+                                   str(stat_out['flank'])]) +
+                                   '\n')
     
     statistics.close()
     
