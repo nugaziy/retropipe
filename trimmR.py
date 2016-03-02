@@ -45,8 +45,8 @@ def trim_primers(record, primer, m, elem_remove):
             return info(good = True, read = record,
                     errors = np.array([0, 0, 0, 0]))
     else:
-        info(good = False, read = None,
-         errors = np.array([1, 0, 0, 0]))
+        return info(good = False, read = None,
+                errors = np.array([1, 0, 0, 0]))
 
 
 
