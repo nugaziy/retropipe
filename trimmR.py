@@ -5,7 +5,7 @@ from os import listdir
 from os.path import isfile, join
 from utils import *
 from collections import namedtuple
-info = namedtuple('good', 'read', 'errors')
+info = namedtuple('info', 'good read errors')
 
 def hamming (x1, x2, m):
     j = 0
@@ -20,8 +20,6 @@ def hamming (x1, x2, m):
 
 def trim_primers(record, primer, m, elem_remove):
     record_seq = record.seq
-    result = info(good = True, read = None,
-     errors = np.array([0, 0, 0, 0]))
     len_primer = len(primer)
     ham_prim = hamming(primer, record_seq[0:len_primer], m)
     ham_prim_shift = hamming(primer, record_seq[1:(len_primer+1)], m)
@@ -30,35 +28,30 @@ def trim_primers(record, primer, m, elem_remove):
             alu = record_seq[len_primer:(len_primer+6)]
             for elem in elem_remove:
                 if record_seq[(len_primer+6):].find(elem, 0) != -1:
-                    result.good = False
-                    result.errors = np.array([0, 0, 0, 1])
-                    return result
+                    return info(good = False, read = None,
+                            errors = np.array([0, 0, 0, 1]))
             record = record[(len_primer+6):]
             record.description += ' alu.seq:' + str(alu)
-            result.read = record
-            return result
+            return info(good = True, read = record,
+                    errors = np.array([0, 0, 0, 0]))
         else:
             alu = record_seq[(len_primer+1):(len_primer+7)]
             for elem in elem_remove:
                 if record_seq[(len_primer+7):].find(elem, 0) != -1:
-                    result.good = False
-                    result.errors = np.array([0, 0, 0, 1])
-                    return result
+                    return info(good = False, read = None,
+                            errors = np.array([0, 0, 0, 1]))
             record = record[(len_primer+7):]
             record.description += ' alu.seq:' + str(alu)
-            result.read = record
-            return result
+            return info(good = True, read = record,
+                    errors = np.array([0, 0, 0, 0]))
     else:
-        result.good = False
-        result.errors = np.array([1, 0, 0, 0])
-        return result
+        info(good = False, read = None,
+         errors = np.array([1, 0, 0, 0]))
 
 
 
 def trim_ads(record, ad1, ad2, barlen, m, elem_remove):
     record_seq = record.seq
-    result = info(good = True, read = None,
-     errors = np.array([0, 0, 0, 0]))
     len_ad1 = len(ad1)
     len_ad2 = len(ad2)
     seq1 = record_seq[0:len_ad1]
@@ -73,37 +66,32 @@ def trim_ads(record, ad1, ad2, barlen, m, elem_remove):
         barcode = record_seq[(len_ad1+1):(len_ad1+barlen+1)]
         for elem in elem_remove:
                 if record_seq[(len_ad1+barlen+len_ad2):].find(elem, 0) != -1:
-                    result.good = False
-                    result.errors = np.array([0, 0, 0, 1])
-                    return result
+                    return info(good = False, read = None,
+                            errors = np.array([0, 0, 0, 1]))
         record = record[(len_ad1+barlen+len_ad2):]
         record.description += ' barcode:' + str(barcode)
-        result.read = record
-        return result
+        return info(good = True, read = record,
+                errors = np.array([0, 0, 0, 0]))
     elif (ham_ad1_shift)and(ham_ad2_shift):
         barcode = record_seq[(len_ad1+1):(len_ad1+barlen+1)]
         for elem in elem_remove:
             if record_seq[(len_ad1+barlen+len_ad2+1):].find(elem, 0) != -1:
-                result.good = False
-                result.errors = np.array([0, 0, 0, 1])
-                return result
+                return info(good = False, read = None,
+                        errors = np.array([0, 0, 0, 1]))
         record = record[(len_ad1+barlen+len_ad2+1):]
         record.description += ' barcode:' + str(barcode)
-        result.read = record
-        return result
+        return info(good = True, read = record,
+                errors = np.array([0, 0, 0, 0]))
     else:
         if not((ham_ad1)or(ham_ad2)):
-            result.good = False
-            result.errors = np.array([0, 1, 1, 0])
-            return result
+            return info(good = False, read = None,
+                    errors = np.array([0, 1, 1, 0]))
         elif not(ham_ad1):
-            result.good = False
-            result.errors = np.array([0, 1, 0, 0])
-            return result
+            return info(good = False, read = None,
+                    errors = np.array([0, 1, 0, 0]))
         else:
-            result.good = False
-            result.errors = np.array([0, 0, 1, 0])
-            return result
+            return info(good = False, read = None,
+                    errors = np.array([0, 0, 1, 0]))
 
 
 
