@@ -4,7 +4,8 @@ import numpy as np
 from os import listdir
 from os.path import isfile, join
 from utils import *
-
+from collections import namedtuple
+info = namedtuple('good', 'read', 'errors')
 
 def hamming (x1, x2, m):
     j = 0
@@ -17,8 +18,10 @@ def hamming (x1, x2, m):
 
 
 
-def trim_primers(record_seq, primer, m, elem_remove):
-    badgood = {'good':False, 'bad':np.array([0, 0, 0, 0]), 'alu':None, 'flank':None}
+def trim_primers(record, primer, m, elem_remove):
+    record_seq = record.seq
+    result = info(good = True, read = None,
+     errors = np.array([0, 0, 0, 0]))
     len_primer = len(primer)
     ham_prim = hamming(primer, record_seq[0:len_primer], m)
     ham_prim_shift = hamming(primer, record_seq[1:(len_primer+1)], m)
@@ -27,26 +30,35 @@ def trim_primers(record_seq, primer, m, elem_remove):
             alu = record_seq[len_primer:(len_primer+6)]
             for elem in elem_remove:
                 if record_seq[(len_primer+6):].find(elem, 0) != -1:
-                    badgood['bad'] = np.array([0, 0, 0, 1])
-                    return badgood
-            badgood['flank'] = record_seq[(len_primer+6):]
+                    result.good = False
+                    result.errors = np.array([0, 0, 0, 1])
+                    return result
+            record = record[(len_primer+6):]
+            record.description += ' alu.seq:' + str(alu)
+            result.read = record
+            return result
         else:
             alu = record_seq[(len_primer+1):(len_primer+7)]
             for elem in elem_remove:
                 if record_seq[(len_primer+7):].find(elem, 0) != -1:
-                    badgood['bad'] = np.array([0, 0, 0, 1])
-                    return badgood
-            badgood['flank'] = record_seq[(len_primer+7):]
-        badgood['good'] = True
-        badgood['alu'] = alu
+                    result.good = False
+                    result.errors = np.array([0, 0, 0, 1])
+                    return result
+            record = record[(len_primer+7):]
+            record.description += ' alu.seq:' + str(alu)
+            result.read = record
+            return result
     else:
-        badgood['bad'] = np.array([1, 0, 0, 0])
-    return badgood
+        result.good = False
+        result.errors = np.array([1, 0, 0, 0])
+        return result
 
 
 
-def trim_ads(record_seq, ad1, ad2, barlen, m, elem_remove):
-    badgood = {'good':False, 'bad':np.array([0, 0, 0, 0]), 'barcode':None, 'flank':None}
+def trim_ads(record, ad1, ad2, barlen, m, elem_remove):
+    record_seq = record.seq
+    result = info(good = True, read = None,
+     errors = np.array([0, 0, 0, 0]))
     len_ad1 = len(ad1)
     len_ad2 = len(ad2)
     seq1 = record_seq[0:len_ad1]
@@ -58,29 +70,40 @@ def trim_ads(record_seq, ad1, ad2, barlen, m, elem_remove):
     ham_ad2 = hamming(ad2, seq2, m)
     ham_ad2_shift = hamming(ad1, seq2_shift, m)
     if (ham_ad1)and(ham_ad2):
+        barcode = record_seq[(len_ad1+1):(len_ad1+barlen+1)]
         for elem in elem_remove:
                 if record_seq[(len_ad1+barlen+len_ad2):].find(elem, 0) != -1:
-                    badgood['bad'] = np.array([0, 0, 0, 1])
-                    return badgood
-        badgood['good'] = True
-        badgood['barcode'] = record_seq[len_ad1:(len_ad1+barlen)]
-        badgood['flank'] = record_seq[(len_ad1+barlen+len_ad2):]
+                    result.good = False
+                    result.errors = np.array([0, 0, 0, 1])
+                    return result
+        record = record[(len_ad1+barlen+len_ad2):]
+        record.description += ' barcode:' + str(barcode)
+        result.read = record
+        return result
     elif (ham_ad1_shift)and(ham_ad2_shift):
+        barcode = record_seq[(len_ad1+1):(len_ad1+barlen+1)]
         for elem in elem_remove:
             if record_seq[(len_ad1+barlen+len_ad2+1):].find(elem, 0) != -1:
-                badgood['bad'] = np.array([0, 0, 0, 1])
-                return badgood
-        badgood['good'] = True
-        badgood['barcode'] = record_seq[(len_ad1+1):(len_ad1+barlen+1)]
-        badgood['flank'] = record_seq[(len_ad1+barlen+len_ad2+1):] 
+                result.good = False
+                result.errors = np.array([0, 0, 0, 1])
+                return result
+        record = record[(len_ad1+barlen+len_ad2+1):]
+        record.description += ' barcode:' + str(barcode)
+        result.read = record
+        return result
     else:
         if not((ham_ad1)or(ham_ad2)):
-            badgood['bad'] = np.array([0, 1, 1, 0])
+            result.good = False
+            result.errors = np.array([0, 1, 1, 0])
+            return result
         elif not(ham_ad1):
-            badgood['bad'] = np.array([0, 1, 0, 0])
+            result.good = False
+            result.errors = np.array([0, 1, 0, 0])
+            return result
         else:
-            badgood['bad'] = np.array([0, 0, 1, 0])
-    return badgood
+            result.good = False
+            result.errors = np.array([0, 0, 1, 0])
+            return result
 
 
 
@@ -100,6 +123,11 @@ def trim_reads(filename1, filename2, inputdir, outputdir, mist, primer, ad1, ad2
     outputfile1, ext = os.path.splitext(filename1)
     outputfile2, ext = os.path.splitext(filename2)
     
+    #goodr1 = outputdir + outputfile1 + '_good.fastq'
+    #goodr2 = outputdir + outputfile2 + '_good.fastq'
+    #badr1 = outputdir + outputfile1 + '_bad.fastq'
+    #badr2 = outputdir + outputfile2 + '_bad.fastq'
+    
     goodr1 = open(outputdir + outputfile1 + '_good.fastq', 'w')
     goodr2 = open(outputdir + outputfile2 + '_good.fastq', 'w')
     badr1 = open(outputdir + outputfile1 + '_bad.fastq', 'w')
@@ -112,56 +140,25 @@ def trim_reads(filename1, filename2, inputdir, outputdir, mist, primer, ad1, ad2
     elem = ('primer', 'ad', 'green', 'flank')
     count_reads = {'readname':readsname, 'all':0, 'good':0, 'bad':0, 'primer':0, 'ad':0, 'green':0}
     for r1, r2 in log_progress(zip(original_R1_reads, original_R2_reads), name = readsname, size = count_fastq_records(inputdir + filename1), every = 250):
+    #for r1, r2 in zip(original_R1_reads, original_R2_reads):
         count_reads['all'] += 1
-        fr1 = trim_primers(r1.seq, primer, mist, elem_remove)
-        if fr1['good']:
-            fr2 = trim_ads(r2.seq, ad1, ad2, barlen, mist, elem_remove)
-            if fr2['good']:
+        fr1 = trim_primers(r1, primer, mist, elem_remove)
+        if fr1.good:
+            fr2 = trim_ads(r2, ad1, ad2, barlen, mist, elem_remove)
+            if fr2.good:
                 count_reads['good'] += 1
-                
-                r1.description += ' alu.seq:' + str(fr1['alu'])
-                r1 = r1[start_r1:end_r1] # HERE! http://biopython.org/DIST/docs/tutorial/Tutorial.html#htoc286
-                
-                r2.description += ' barcode:' + str(fr2['barcode'])
-                r2 = r2[start_r2:end_r2]
-                goodr1.write(r1)
-                goodr2.write(r2)
-                
-                #goodread1 = str(r1.format('fastq'))
-                #goodread1 = goodread1.split('\n')
-                #goodread1[0] = goodread1[0] + ' alu.seq:' + str(fr1['alu'])
-                #goodread1[1] = str(fr1['flank'])
-                #goodread1 = '\n'.join(goodread1)
-                
-                #goodread2 = str(r2.format('fastq'))
-                #goodread2 = goodread2.split('\n')
-                #goodread2[0] = goodread2[0] + ' barcode:' + str(fr2['barcode'])
-                #goodread2[1] = str(fr2['flank'])
-                #goodread2 = '\n'.join(goodread2)
-                
-                #goodr1.write(goodread1)
-                #goodr2.write(goodread2)
+                goodr1.write(fr1.read.format('fastq'))
+                goodr2.write(fr1.read.format('fastq'))
             else:
-                r1.description += ' reason:' + concate(elem, (np.char.mod('%d', fr2['bad'])))
-                badr1.write(r1.format("fastq"))
-                badr2.write(r2.format("fastq"))
-                
-                #badread = str(r1.format('fastq'))
-                #badread = badread.split('\n')
-                #badread[0] = badread[0] + ' reason:' + concate(elem, (np.char.mod('%d', fr2['bad'])))
-                #badread = '\n'.join(badread)
-                #badr1.write(badread)
-                #badr2.write(str(r2.format('fastq')))
-                
-                count = np.sum([count, fr2['bad']], axis=0)
+                r2.description += ' reason:' + concate(elem, (np.char.mod('%d', fr2.errors)))
+                badr1.write(r1.format('fastq'))
+                badr2.write(r2.format('fastq'))
+                count = np.sum([count, fr2.errors], axis=0)
         else:
-            badread = str(r1.format('fastq'))
-            badread = badread.split('\n')
-            badread[0] = badread[0] + ' reason:' + concate(elem, (np.char.mod('%d', fr1['bad'])))
-            badread = '\n'.join(badread)
-            badr1.write(badread)
-            badr2.write(str(r2.format('fastq')))
-            count = np.sum([count, fr1['bad']], axis=0)
+            r2.description += ' reason:' + concate(elem, (np.char.mod('%d', fr1.errors)))
+            badr1.write(r1.format('fastq'))
+            badr2.write(r2.format('fastq'))
+            count = np.sum([count, fr1.errors], axis=0)
     
     goodr1.close()
     goodr2.close()
