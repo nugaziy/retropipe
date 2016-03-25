@@ -13,7 +13,7 @@ def clustering(df, perm_gap, cluster_id, chrom, strand, table1, table2):
             cluster = 'open'
             cluster_id += 1
             start = row['START']
-            end = row['START']
+            end = row['END']
             info = defaultdict(list)
             best_read = row['READ1']
             current_mdflag = row['MDFLAG_R1']
@@ -46,7 +46,7 @@ best_cigar + '\t' + best_mdflag + '\n')
                 cluster = 'open'
                 cluster_id += 1
                 start = row['START']
-                end = row['START']
+                end = row['END']
                 info = defaultdict(list)
                 best_read = row['READ1']
                 current_mdflag = row['MDFLAG_R1']
