@@ -1,4 +1,4 @@
-def log_progress(sequence, name, every=None, size=None):
+def log_progress(sequence, name, every=None, size=None, who='reads'):
     from ipywidgets import IntProgress, HTML, VBox
     from IPython.display import display
     
@@ -31,7 +31,7 @@ def log_progress(sequence, name, every=None, size=None):
         for index, record in enumerate(sequence, 1):
             if index == 1 or index % every == 0:
                 if is_iterator:
-                    label.value = name + ': ' + '{index} reads / ?'.format(index=index)
+                    label.value = name + ': ' + '{index} {who} / ?'.format(index=index, who=who)
                 else:
                     progress.value = index
                     label.value = u'{name}: {index} / {size}'.format(name=name, index=index, size=size)
@@ -42,8 +42,7 @@ def log_progress(sequence, name, every=None, size=None):
     else:
         progress.bar_style = 'success'
         progress.value = index
-        label.value = str(name + ': ' + str(index) + ' reads' or '?')
-
+        label.value = str(name + ': ' + str(index) + ' ' + str(who) or '?')
 
 
 def count_lines(filepath):
