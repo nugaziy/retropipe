@@ -91,7 +91,7 @@ def main(inputdir, outputdir, perm_gap):
             data = pd.read_table(inputdir + filename)
             data_group = data.groupby(['CHR', 'STRAND'])
             cluster_id = 0
-            for name, group in data_group:
+            for name, group in log_progress(data_group, name = inputfile, every = 1, who = 'classes: chrom & strand'):
                 group = group.sort_values(['START'])
                 cluster_id = clustering(group, perm_gap, cluster_id, name[0], name[1], table1, table2)
             print ('Done ' + inputfile + '\n')

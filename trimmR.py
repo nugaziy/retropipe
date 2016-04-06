@@ -4,6 +4,7 @@ import numpy as np
 from os import listdir
 from os.path import isfile, join
 from utils import *
+import subprocess
 from collections import namedtuple
 info = namedtuple('info', 'good read alu_barcode errors')
 
@@ -112,7 +113,7 @@ def concate(x1, x2):
 
 
 
-def trim_reads(filename1, filename2, inputdir, outputdir, mist, primer, ad1, ad2, barlen, elem_remove):
+def trim_reads(filename1, filename2, inputdir, outputdir, mist1, mist2, primer, ad1, ad2, barlen, elem_remove):
     readsname = filename1.split('R1')[0]
     readsname = readsname.rsplit('.', 1)[0]
     
@@ -132,9 +133,9 @@ def trim_reads(filename1, filename2, inputdir, outputdir, mist, primer, ad1, ad2
     count_reads = {'readname':readsname, 'all':0, 'good':0, 'bad':0, 'primer':0, 'ad':0, 'green':0}
     for r1, r2 in log_progress(zip(original_R1_reads, original_R2_reads), name = readsname, size = count_fastq_records(inputdir + filename1), every = 250):
         count_reads['all'] += 1
-        fr1 = trim_primers(r1, primer, mist, elem_remove)
+        fr1 = trim_primers(r1, primer, mist1, elem_remove)
         if fr1.good:
-            fr2 = trim_ads(r2, ad1, ad2, barlen, mist, elem_remove)
+            fr2 = trim_ads(r2, ad1, ad2, barlen, mist2, elem_remove)
             if fr2.good:
                 count_reads['good'] += 1
                 fr1.read.id += fr1.alu_barcode + fr2.alu_barcode
@@ -175,7 +176,7 @@ def trim_reads(filename1, filename2, inputdir, outputdir, mist, primer, ad1, ad2
 
 
 
-def main(inputdir, outputdir, mist, primer, ad1, ad2, barlen, elem_remove):
+def main(inputdir, outputdir, mist1, mist2, primer, ad1, ad2, barlen, elem_remove):
     inputdir += "/"
     outputdir += "/"
 
@@ -211,8 +212,40 @@ def main(inputdir, outputdir, mist, primer, ad1, ad2, barlen, elem_remove):
     statistics = open(outputdir + 'statistics.txt', 'w')
     statistics.write('readname\t' + 'reads\t' + 'good.pt\t' + 'bad.pt\t' + 'primer\t' + 'ad\t' + 'green\t' + 'flank\n')
     for filename1, filename2 in conform_files:
+        '''
+        ext1, inputfile1 = os.path.splitext(filename1)
+        ext2, inputfile2 = os.path.splitext(filename2)
+        is_ext_gz = False
+        if ext1 == 'gz':
+            print ('unpack ' + inputfile1 + '\t')
+            if not os.path.exists(outputdir + 'forunpackingfastq'):
+                os.makedirs(outputdir + 'forunpackingfastq')
+            unpack_line = 'tar -zxvf ' + inputdir + filename1 + '> ' + outputdir + forunpackingfastq + '/r1_unpack.fastq'
+            new_input1 = outputdir + forunpackingfastq + '/'
+            is_ext_gz = True
+            p = subprocess.Popen (unpack_line, stdout=subprocess.PIPE, shell = True)
+            p.stdout
+        else: new_input = ''
+        if ext2 == 'gz':
+            if is_ext_gz:
+                print ('unpack ' + inputfile2 + '\t')
+                if not os.path.exists(outputdir + 'forunpackingfastq'):
+                    os.makedirs(outputdir + 'forunpackingfastq')
+                unpack_line = 'tar -zxvf ' + inputdir + filename2 + '> ' + outputdir + forunpackingfastq + '/r2_unpack.fastq'
+                is_ext_gz = True
+                p = subprocess.Popen (unpack_line, stdout=subprocess.PIPE, shell = True)
+                p.stdout
+            else:
+                cp_line = 'cp ' + inputdir + filename1 + '> ' + outputdir + forunpackingfastq + '/r1_unpack.fastq'
+        else:
+            if is_ext_gz:
+                cp_line = 'cp ' + inputdir + filename2 + '> ' + outputdir + forunpackingfastq + '/r2_unpack.fastq'
+                p = subprocess.Popen (cp_line, stdout=subprocess.PIPE, shell = True)
+                p.stdout
+
+        '''
         stat_out = trim_reads(filename1, filename2,
-                              inputdir, outputdir, mist,
+                              inputdir, outputdir, mist1, mist2,
                               primer, ad1, ad2, barlen, elem_remove)
         statistics.write("\t".join([stat_out['readname'], 
                                    str(stat_out['all']), 
