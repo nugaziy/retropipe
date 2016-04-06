@@ -1,4 +1,4 @@
-import pandas
+import pandas as pd
 import re
 from collections import defaultdict
 import sys, os, re
@@ -7,10 +7,10 @@ from os import listdir
 from os.path import isfile, join
 
 def clustering(df, perm_gap, cluster_id, chrom, strand, table1, table2):
-    cluster = 'close'
+    is_cluster_open = False
     for index, row in df.iterrows():
-        if cluster == 'close':
-            cluster = 'open'
+        if not is_cluster_open:
+            is_cluster_open = True
             cluster_id += 1
             start = row['START']
             end = row['END']
@@ -37,13 +37,15 @@ def clustering(df, perm_gap, cluster_id, chrom, strand, table1, table2):
                     best_mdflag = current_mdflag
                     best_cigar = row['CIGAR_R1']
             else:
-                cluster = 'close'
+                is_cluster_open = False
+                info['barcode'] = list(set(info['barcode']))
+                info['alu'] = list(set(info['alu']))
                 table1.write(str(cluster_id) + '\t' + chrom + '\t' + strand + '\t' + 
-str(start) + '\t' + str(end) + '\t' + best_read + '\t' + ','.join(str(x) for x in info['id']) + '\t' + 
-best_cigar + '\t' + best_mdflag + '\n')
-                table2.write(str(cluster_id) + '\t' + ','.join(str(x) for x in info['barcode']) + '\t' + 
-','.join(str(x) for x in info['alu']) + '\n')
-                cluster = 'open'
+str(start) + '\t' + str(end) + '\t' + best_read + '\t' + best_cigar + '\t' + best_mdflag + '\t' +
+str(len(info['barcode'])) + '\t' + str(len(info['id'])) + '\n')
+                table2.write(str(cluster_id) + '\t' + ','.join(str(x) for x in info['id']) + '\t' + 
+','.join(str(x) for x in info['barcode']) + '\t' + ','.join(str(x) for x in info['alu']) + '\n')
+                is_cluster_open = True
                 cluster_id += 1
                 start = row['START']
                 end = row['END']
@@ -57,12 +59,14 @@ best_cigar + '\t' + best_mdflag + '\n')
                 info['id'].append(row['ID'])
                 info['barcode'].append(row['BARCODE'])
                 info['alu'].append(row['ALU'])
-    if cluster == 'open':
+    if is_cluster_open:
+        info['barcode'] = list(set(info['barcode']))
+        info['alu'] = list(set(info['alu']))
         table1.write(str(cluster_id) + '\t' + chrom + '\t' + strand + '\t' + 
-str(start) + '\t' + str(end) + '\t' + best_read + '\t' + ','.join(str(x) for x in info['id']) + '\t' + 
-best_cigar + '\t' + best_mdflag + '\n')
-        table2.write(str(cluster_id) + '\t' + ','.join(str(x) for x in info['barcode']) + '\t' + 
-','.join(str(x) for x in info['alu']) + '\n')
+str(start) + '\t' + str(end) + '\t' + best_read + '\t' + best_cigar + '\t' + best_mdflag + '\t' +
+str(len(info['barcode'])) + '\t' + str(len(info['id'])) + '\n')
+        table2.write(str(cluster_id) + '\t' + ','.join(str(x) for x in info['id']) + '\t' + 
+','.join(str(x) for x in info['barcode']) + '\t' + ','.join(str(x) for x in info['alu']) + '\n')
     return (cluster_id)
 
 
@@ -81,10 +85,10 @@ def main(inputdir, outputdir, perm_gap):
             table1_name = filename.split('_table')[0] + '_bigtable_all.txt'
             table2_name = filename.split('_table')[0] + '_bigtable_baralu.txt'
             table1 = open(outputdir + table1_name, 'w')
-            table1.write('CLUSTER_ID\tCHR\tSTRAND\tSTART\tEND\tREAD1_BEST\tID_LIST\tCIGAR_BEST\tMDFLAG_BEST\n')
+            table1.write('CLUSTER_ID\tCHR\tSTRAND\tSTART\tEND\tREAD1_BEST\tCIGAR_BEST\tMDFLAG_BEST\tNUM_BARCODES\tNUM_READS\n')
             table2 = open(outputdir + table2_name, 'w')
-            table2.write('CLUSTER_ID\tBARCODE_LIST\tALU_LIST\n')
-            data = pandas.read_table(inputdir + filename)
+            table2.write('CLUSTER_ID\tID_LIST\tBARCODE_LIST\tALU_LIST\n')
+            data = pd.read_table(inputdir + filename)
             data_group = data.groupby(['CHR', 'STRAND'])
             cluster_id = 0
             for name, group in data_group:
