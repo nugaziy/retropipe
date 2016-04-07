@@ -66,7 +66,7 @@ def trim_ads(record, ad1, ad2, barlen, m, elem_remove):
     ham_ad1 = hamming(ad1, seq1, m)
     ham_ad1_shift = hamming(ad1, seq1_shift, m)
     ham_ad2 = hamming(ad2, seq2, m)
-    ham_ad2_shift = hamming(ad1, seq2_shift, m)
+    ham_ad2_shift = hamming(ad2, seq2_shift, m)
     if (ham_ad1)and(ham_ad2):
         barcode = record_seq[(len_ad1+1):(len_ad1+barlen+1)]
         for elem in elem_remove:
