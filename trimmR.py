@@ -20,6 +20,7 @@ def hamming (x1, x2, m):
 
 
 def trim_primers(record, primer, m, elem_remove):
+    #test
     record_seq = record.seq
     len_primer = len(primer)
     ham_prim = hamming(primer, record_seq[0:len_primer], m)
