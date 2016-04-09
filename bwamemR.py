@@ -39,12 +39,14 @@ def main(inputdir, refway, outputdir, memline):
 
     logfile = open(outputdir + 'bwamem_output.log', 'w')
 
+    print(conform_files)
+
     for filename1, filename2 in conform_files:
         readsname = filename1.split('R1')[0]
         readsname = readsname.rsplit('.', 1)[0]
-        memline = memline + ' ' + refway + ' ' + inputdir + filename1 + ' ' + inputdir + filename2 + ' > ' + outputdir + readsname + '.sam'
-        print (memline)
-        p = subprocess.Popen (memline, stderr=subprocess.PIPE, shell = True)
+        bwamem = memline + ' ' + refway + ' ' + inputdir + filename1 + ' ' + inputdir + filename2 + ' > ' + outputdir + readsname + '.sam'
+        print (bwamem)
+        p = subprocess.Popen (bwamem, stderr=subprocess.PIPE, shell = True)
         logline = p.stderr.read().decode()
         print (logline)
         logfile.write(logline)
