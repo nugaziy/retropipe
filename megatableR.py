@@ -77,7 +77,6 @@ def main(inputdir, outputdir, window):
     colnames = ['CLUSTER_ID', 'CHR', 'POS', 
 'STRAND', 'READ1_BEST', 'CIGAR_BEST', 'MDFLAG_BEST', 'NUM_BARCODES', 'NUM_READS']
     table = open(outputdir + 'megatable.txt', 'w')
-    additional_colnames = list()
     start_point = defaultdict()
     for filename in onlyfiles:
         filename = filename.rstrip()
@@ -85,9 +84,9 @@ def main(inputdir, outputdir, window):
         if ext == '.txt' and re.search('_bigtable_all', inputfile):
             data_index = inputfile.split('_bigtable_all')[0]
             start_point[data_index] = 0
-            additional_colnames.append(inputfile.split('_bigtable_all')[0])
     table.write('MEGACLUSTER_ID\tCHR\tPOS\tSTRAND\tREAD1_BEST\tCIGAR_BEST\tMDFLAG_BEST\t' + 
-'\t'.join(x + 'NUM_READS' for x in additional_colnames) + '\t' + '\t'.join(x + 'NUM_BARCODES' for x in additional_colnames) + '\n')
+'\t'.join(x + 'NUM_READS' for x in list(start_point.keys())) + '\t' + 
+'\t'.join(x + 'NUM_BARCODES' for x in list(start_point.keys())) + '\n')
     megacluster_id = 0
     for i_chrom in log_progress(range(22), name = 'megatable', every = 1, who = 'classes: chrom'):
         bigdata_chrom = pd.DataFrame(columns = colnames)
