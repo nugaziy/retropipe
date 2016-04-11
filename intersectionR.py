@@ -3,6 +3,7 @@ import intervaltree as it
 import sys, os, re
 from os import listdir
 from os.path import isfile, join
+from utils import *
 
 def main(inputtable, inputlibrary, outputdir, window):
 	inputlibrary += "/"
@@ -17,7 +18,7 @@ def main(inputtable, inputlibrary, outputdir, window):
 
 	megatable_group = megatable.groupby(['CHR', 'STRAND'])
 	tree_dict = {}
-	for name, group in  megatable_group:
+	for name, group in  log_progress(megatable_group, name = 'Create tree_list with', every = 1, who = 'classes: chrom & strand'):
 		start_group = [x - window for x in list(group['POS'])]
 		end_group = [x + window for x in list(group['POS'])]
 		tree_dict[name[0] + name[1]] = it.IntervalTree(it.Interval(start, end, data)
@@ -29,7 +30,7 @@ def main(inputtable, inputlibrary, outputdir, window):
 		inputfile, ext = os.path.splitext(filename)
 		replib = pd.read_table(inputlibrary + filename)
 		replib_group = replib.groupby(['CHR', 'STRAND'])
-		for name, group in replib_group:
+		for name, group in log_progress(replib_group, name = 'For lib - ' + inputfile, every = 1, who = 'classes: chrom & strand'):
 			if name[0] + name[1] in tree_dict:
 				if name[0] == '+':
 					point = zip(list(group['START']), list(group['NAME']))
