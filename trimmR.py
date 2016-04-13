@@ -6,6 +6,8 @@ from os.path import isfile, join
 from utils import *
 import subprocess
 from collections import namedtuple
+import multiprocessing as mp
+
 info = namedtuple('info', 'good read alu_barcode errors')
 
 def hamming (x1, x2, m):
@@ -17,91 +19,67 @@ def hamming (x1, x2, m):
                 return (False)
     return (True)
 
-
-
-def trim_primers(record, primer, m, elem_remove):
+def trim_primers (record, primer, shift, m, elem_remove, search_win):
     #test
     record_seq = record.seq
     len_primer = len(primer)
-    ham_prim = hamming(primer, record_seq[0:len_primer], m)
-    ham_prim_shift = hamming(primer, record_seq[1:(len_primer+1)], m)
-    if ham_prim or ham_prim_shift:
-        if ham_prim: 
-            alu = record_seq[len_primer:(len_primer+6)]
+    pr_elem_remove = primer
+    for i in range(shift):
+        ham_prim = hamming(primer, record_seq[i : len_primer + i], m)
+        if ham_prim:
+            alu = record_seq[len_primer + i : len_primer + 6 + i]
             for elem in elem_remove:
-                if record_seq[(len_primer+6):].find(elem, 0) != -1:
-                    return info(good = False, read = None, alu_barcode = None,
-                            errors = np.array([0, 0, 0, 1]))
-            record = record[(len_primer+6):]
+                if record_seq[len_primer + 6 + i :].find(elem, 0) != -1:
+                    return (info(good = False, read = None, alu_barcode = None,
+                            errors = np.array([0, 0, 0, 1, 0])))
+            if record_seq[len_primer + 6 + i : len_primer + 6 + i + search_win].find(pr_elem_remove, 0) != -1:
+                    return (info(good = False, read = None, alu_barcode = None,
+                            errors = np.array([0, 0, 0, 0, 1])))
+            record = record[len_primer + 6 + i :]
             alu_bar = '__ab:' + str(alu)
             record.description = ''
             record.name = ''
-            return info(good = True, read = record, alu_barcode = alu_bar,
-                    errors = np.array([0, 0, 0, 0]))
-        else:
-            alu = record_seq[(len_primer+1):(len_primer+7)]
-            for elem in elem_remove:
-                if record_seq[(len_primer+7):].find(elem, 0) != -1:
-                    return info(good = False, read = None, alu_barcode = None, 
-                            errors = np.array([0, 0, 0, 1]))
-            record = record[(len_primer+7):]
-            alu_bar = '__ab:' + str(alu)
-            record.description = ''
-            record.name = ''
-            return info(good = True, read = record, alu_barcode = alu_bar,
-                    errors = np.array([0, 0, 0, 0]))
-    else:
-        return info(good = False, read = None, alu_barcode = None,
-                errors = np.array([1, 0, 0, 0]))
+            return (info(good = True, read = record, alu_barcode = alu_bar,
+                    errors = np.array([0, 0, 0, 0, 0])))
+    return (info(good = False, read = None, alu_barcode = None,
+                errors = np.array([1, 0, 0, 0, 0])))
 
-
-
-def trim_ads(record, ad1, ad2, barlen, m, elem_remove):
+def trim_ads (record, ad1, ad2, barlen, shift, m, elem_remove, search_win):
     record_seq = record.seq
     len_ad1 = len(ad1)
     len_ad2 = len(ad2)
-    seq1 = record_seq[0:len_ad1]
-    seq1_shift = record_seq[1:(len_ad1+1)]
-    seq2 = record_seq[(len_ad1+barlen):(len_ad1+barlen+len_ad2)]
-    seq2_shift = record_seq[(len_ad1+barlen+1):(len_ad1+barlen+len_ad2+1)]
-    ham_ad1 = hamming(ad1, seq1, m)
-    ham_ad1_shift = hamming(ad1, seq1_shift, m)
-    ham_ad2 = hamming(ad2, seq2, m)
-    ham_ad2_shift = hamming(ad2, seq2_shift, m)
-    if (ham_ad1)and(ham_ad2):
-        barcode = record_seq[(len_ad1+1):(len_ad1+barlen+1)]
-        for elem in elem_remove:
-                if record_seq[(len_ad1+barlen+len_ad2):].find(elem, 0) != -1:
-                    return info(good = False, read = None, alu_barcode = None,
-                            errors = np.array([0, 0, 0, 1]))
-        record = record[(len_ad1+barlen+len_ad2):]
-        alu_bar = '__ab:' + str(barcode)
-        record.description = ''
-        record.name = ''
-        return info(good = True, read = record, alu_barcode = alu_bar, 
-                errors = np.array([0, 0, 0, 0]))
-    elif (ham_ad1_shift)and(ham_ad2_shift):
-        barcode = record_seq[(len_ad1+1):(len_ad1+barlen+1)]
-        for elem in elem_remove:
-            if record_seq[(len_ad1+barlen+len_ad2+1):].find(elem, 0) != -1:
-                return info(good = False, read = None, alu_barcode = None,
-                        errors = np.array([0, 0, 0, 1]))
-        record = record[(len_ad1+barlen+len_ad2+1):]
-        alu_bar = '__ab:' + str(barcode)
-        record.description = ''
-        record.name = ''
-        return info(good = True, read = record, alu_barcode = alu_bar,
-                errors = np.array([0, 0, 0, 0]))
-    else:
-        if not((ham_ad1)or(ham_ad2)):
-            return info(good = False, read = None, alu_barcode = None,
-                    errors = np.array([0, 1, 1, 0]))
+    ad_elem_remove = [ad1, ad2]
+    for i in range(shift):
+        seq1 = record_seq[i : len_ad1 + i]
+        seq2 = record_seq[len_ad1 + barlen + i : len_ad1 + barlen + len_ad2 + i]
+        ham_ad1 = hamming(ad1, seq1, m)
+        ham_ad2 = hamming(ad2, seq2, m)
+        if (ham_ad1)and(ham_ad2):
+            barcode = record_seq[len_ad1 + i : len_ad1 + barlen + i]
+            for elem in elem_remove:
+                if record_seq[len_ad1 + barlen + len_ad2 + i :].find(elem, 0) != -1:
+                    return (info(good = False, read = None, alu_barcode = None,
+                            errors = np.array([0, 0, 0, 1, 0])))
+            for ad_elem in ad_elem_remove:
+                if record_seq[len_ad1 + barlen + len_ad2 + i : len_ad1 + barlen + len_ad2 + i + search_win].find(ad_elem, 0) != -1:
+                    return (info(good = False, read = None, alu_barcode = None,
+                        errors = np.array([0, 0, 0, 0, 1])))
+            record = record[len_ad1 + barlen + len_ad2 + i :]
+            alu_bar = '__ab:' + str(barcode)
+            record.description = ''
+            record.name = ''
+            return (info(good = True, read = record, alu_barcode = alu_bar,
+                    errors = np.array([0, 0, 0, 0, 0])))
+        elif not((ham_ad1)or(ham_ad2)):
+            mb_return = info(good = False, read = None, alu_barcode = None,
+                    errors = np.array([0, 1, 1, 0, 0]))
         elif not(ham_ad1):
-            return info(good = False, read = None, alu_barcode = None,
-                    errors = np.array([0, 1, 0, 0]))
+            mb_return = info(good = False, read = None, alu_barcode = None,
+                    errors = np.array([0, 1, 0, 0, 0]))
         else:
-            return info(good = False, read = None, alu_barcode = None,
-                    errors = np.array([0, 0, 1, 0]))
+            mb_return = info(good = False, read = None, alu_barcode = None,
+                    errors = np.array([0, 0, 1, 0, 0]))
+    return (mb_return)
 
 
 
@@ -114,7 +92,8 @@ def concate(x1, x2):
 
 
 
-def trim_reads(filename1, filename2, inputdir, outputdir, mist1, mist2, primer, ad1, ad2, barlen, elem_remove):
+def trim_reads(filename1, filename2, inputdir, outputdir, shift,
+ mist1, mist2, primer, ad1, ad2, barlen, elem_remove, search_win):
     readsname = filename1.split('R1')[0]
     readsname = readsname.rsplit('.', 1)[0]
     
@@ -129,14 +108,15 @@ def trim_reads(filename1, filename2, inputdir, outputdir, mist1, mist2, primer, 
     original_R1_reads = SeqIO.parse(inputdir + filename1, "fastq")
     original_R2_reads = SeqIO.parse(inputdir + filename2, "fastq")
     
-    count = np.array([0, 0, 0, 0])
-    elem = ('primer', 'ad', 'green', 'flank')
-    count_reads = {'readname':readsname, 'all':0, 'good':0, 'bad':0, 'primer':0, 'ad':0, 'green':0}
+    count = np.array([0, 0, 0, 0, 0])
+    elem = ('primer', 'ad', 'green', 'flank_simple', 'flank_strange')
+    count_reads = {'readname':readsname, 'all':0, 'good':0, 'bad':0, 'primer':0, 'ad':0, 'green':0, 'flank_simple':0,
+    'flank_strange':0}
     for r1, r2 in log_progress(zip(original_R1_reads, original_R2_reads), name = readsname, size = count_fastq_records(inputdir + filename1), every = 250):
         count_reads['all'] += 1
-        fr1 = trim_primers(r1, primer, mist1, elem_remove)
+        fr1 = trim_primers(r1, primer, shift, mist1, elem_remove, search_win)
         if fr1.good:
-            fr2 = trim_ads(r2, ad1, ad2, barlen, mist2, elem_remove)
+            fr2 = trim_ads(r2, ad1, ad2, barlen, shift, mist2, elem_remove, search_win)
             if fr2.good:
                 count_reads['good'] += 1
                 fr1.read.id += fr1.alu_barcode + fr2.alu_barcode
@@ -162,7 +142,8 @@ def trim_reads(filename1, filename2, inputdir, outputdir, mist1, mist2, primer, 
     count_reads['primer'] = count[0]
     count_reads['ad'] = count[1]
     count_reads['green'] = count[2]
-    count_reads['flank'] = count[3]
+    count_reads['flank_simple'] = count[3]
+    count_reads['flank_strange'] = count[4]
     
     count_reads['good'] = round((count_reads['good'] / count_reads['all']), 2)
     count_reads['bad'] = round((1 - count_reads['good']), 2)
@@ -177,7 +158,8 @@ def trim_reads(filename1, filename2, inputdir, outputdir, mist1, mist2, primer, 
 
 
 
-def main(inputdir, outputdir, mist1, mist2, primer, ad1, ad2, barlen, elem_remove):
+def main(inputdir, outputdir, shift,
+ mist1, mist2, primer, ad1, ad2, barlen, elem_remove, search_win):
     inputdir += "/"
     outputdir += "/"
 
@@ -211,11 +193,43 @@ def main(inputdir, outputdir, mist1, mist2, primer, ad1, ad2, barlen, elem_remov
         os.makedirs(outputdir)
     
     statistics = open(outputdir + 'statistics.txt', 'w')
-    statistics.write('readname\t' + 'reads\t' + 'good.pt\t' + 'bad.pt\t' + 'primer\t' + 'ad\t' + 'green\t' + 'flank\n')
+    statistics.write('readname\t' + 'reads\t' + 'good.pt\t' + 'bad.pt\t' + 'primer\t' + 'ad\t' + 'green\t' + 'flank_simple\t' + 
+        'flank_strange\n')
+
+    '''
+    # Setup a list of processes that we want to run
+    processes = [mp.Process(target=trim_reads, args=(filename1, filename2,
+                              inputdir, outputdir, mist1, mist2,
+                              primer, ad1, ad2, barlen, elem_remove)) for filename1, filename2 in conform_files]
+
+    # Run processes
+    for p in processes:
+        p.start()
+ 
+    # Exit the completed processes
+    for p in processes:
+        p.join()
+
+    for p in processes:
+        stat_out = output.get()
+        statistics.write("\t".join([stat_out['readname'], 
+                                   str(stat_out['all']), 
+                                   str(stat_out['good']),
+                                   str(stat_out['bad']),
+                                   str(stat_out['primer']),
+                                   str(stat_out['ad']),
+                                   str(stat_out['green']),
+                                   str(stat_out['flank_simple'])]),
+                                   str(stat_out['flank_strange']) +
+                                   '\n')
+
+    '''
+
     for filename1, filename2 in conform_files:
-        '''
+
         ext1, inputfile1 = os.path.splitext(filename1)
         ext2, inputfile2 = os.path.splitext(filename2)
+        '''
         is_ext_gz = False
         if ext1 == 'gz':
             print ('unpack ' + inputfile1 + '\t')
@@ -245,9 +259,8 @@ def main(inputdir, outputdir, mist1, mist2, primer, ad1, ad2, barlen, elem_remov
                 p.stdout
 
         '''
-        stat_out = trim_reads(filename1, filename2,
-                              inputdir, outputdir, mist1, mist2,
-                              primer, ad1, ad2, barlen, elem_remove)
+        stat_out = trim_reads(filename1, filename2, inputdir, outputdir, shift,
+ mist1, mist2, primer, ad1, ad2, barlen, elem_remove, search_win)
         statistics.write("\t".join([stat_out['readname'], 
                                    str(stat_out['all']), 
                                    str(stat_out['good']),
@@ -255,9 +268,10 @@ def main(inputdir, outputdir, mist1, mist2, primer, ad1, ad2, barlen, elem_remov
                                    str(stat_out['primer']),
                                    str(stat_out['ad']),
                                    str(stat_out['green']),
-                                   str(stat_out['flank'])]) +
+                                   str(stat_out['flank_simple']),
+                                   str(stat_out['flank_strange'])]) +
                                    '\n')
-    
+
     statistics.close()
     
 
