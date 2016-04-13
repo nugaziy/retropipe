@@ -30,7 +30,7 @@ def sam2table(inputdir, in_sam_filename, outputdir, tablefilename, out_sam_error
                     if read1.reverse:
                         # it's strand of insertion (not read)
                         strand = '+'
-                        pos = read1.pos + abs(read1.tlen) - 1
+                        pos = read2.pos + abs(read1.tlen) - 1
                     else:
                         strand = '-'
                         pos = read1.pos
