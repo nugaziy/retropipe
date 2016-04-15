@@ -24,7 +24,7 @@ def sam2table(inputdir, in_sam_filename, outputdir, tablefilename, out_sam_error
         else:
             read2 = read
             if read1_bool:
-                if read1.flag in [147, 163]:
+                if read2.flag in [147, 163]:
                     barcode = read2.qname.split('__ab:')[2]
                     alu_seq = read1.qname.split('__ab:')[1]
                     if read1.reverse:
