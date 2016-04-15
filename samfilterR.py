@@ -17,14 +17,14 @@ def sam2table(inputdir, in_sam_filename, outputdir, tablefilename, out_sam_error
         count += 1
         if count % 2 == 1:
             read1 = read
-            if isinstance(read1.flag, [99, 83]):
+            if read1.flag in [99, 83]:
                 read1_bool = True
             else:
                 read1_bool = False
         else:
             read2 = read
             if read1_bool:
-                if isinstance(read1.flag, [147, 163]):
+                if read1.flag in [147, 163]:
                     barcode = read2.qname.split('__ab:')[2]
                     alu_seq = read1.qname.split('__ab:')[1]
                     if read1.reverse:
