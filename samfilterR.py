@@ -18,7 +18,7 @@ def sam2table(inputdir, in_sam_filename, outputdir, tablefilename, out_sam_error
             read1_bool = True
         elif read.flag in [147, 163]:
             read2 = read
-            if read1_bool:
+            if read1_bool and read1.qname == read2.qname:
                 read1_bool = False
                 barcode = read2.qname.split('__ab:')[2]
                 alu_seq = read1.qname.split('__ab:')[1]
@@ -35,6 +35,9 @@ def sam2table(inputdir, in_sam_filename, outputdir, tablefilename, out_sam_error
                 tablefile.write(str(int(id_count)) + '\t' + read1.rname + '\t' + str(pos) + '\t' + strand + '\t' + 
 read1.seq + '\t' +read2.seq + '\t' + barcode + '\t' + alu_seq + '\t' + 
 read1.cigar + '\t' + read2.cigar + '\t' + mdflag_r1 + '\t' + mdflag_r2 + '\n')
+            else:
+                out_sam_error.write(read1)
+                out_sam_error.write(read2)
         else:
             out_sam_error.write(read)
     in_sam_file.close()
