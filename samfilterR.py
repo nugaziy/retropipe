@@ -11,38 +11,32 @@ def sam2table(inputdir, in_sam_filename, outputdir, tablefilename, out_sam_error
     in_sam = Reader(in_sam_file)
     out_sam_error = Writer(out_sam_errorfile)
     tablefile.write('ID\tCHR\tPOS\tSTRAND\tREAD1\tREAD2\tBARCODE\tALU\tCIGAR_R1\tCIGAR_R2\tMDFLAG_R1\tMDFLAG_R2\n')
-    count = 0
     id_count = 0
     for read in log_progress(in_sam, name = in_sam_filename, size = count_fastq_records(inputdir + in_sam_filename), every = 250):
-        count += 1
-        if count % 2 == 1:
+        if read.flag in [99, 83]:
             read1 = read
-            if read1.flag in [99, 83]:
-                read1_bool = True
-            else:
-                read1_bool = False
-        else:
+            read1_bool = True
+        elif read.flag in [147, 163]:
             read2 = read
             if read1_bool:
-                if read2.flag in [147, 163]:
-                    barcode = read2.qname.split('__ab:')[2]
-                    alu_seq = read1.qname.split('__ab:')[1]
-                    if read1.reverse:
-                        # it's strand of insertion (not read)
-                        strand = '+'
-                        pos = read2.pos + abs(read1.tlen) - 1
-                    else:
-                        strand = '-'
-                        pos = read1.pos
-                    id_count += 1
-                    mdflag_r1 = read1._tags[1]
-                    mdflag_r2 = read2._tags[1]
-                    tablefile.write(str(int(id_count)) + '\t' + read1.rname + '\t' + str(pos) + '\t' + strand + '\t' + 
+                read1_bool = False
+                barcode = read2.qname.split('__ab:')[2]
+                alu_seq = read1.qname.split('__ab:')[1]
+                if read1.reverse:
+                    # it's strand of insertion (not read)
+                    strand = '+'
+                    pos = read2.pos + abs(read1.tlen) - 1
+                else:
+                    strand = '-'
+                    pos = read1.pos
+                id_count += 1
+                mdflag_r1 = read1._tags[1]
+                mdflag_r2 = read2._tags[1]
+                tablefile.write(str(int(id_count)) + '\t' + read1.rname + '\t' + str(pos) + '\t' + strand + '\t' + 
 read1.seq + '\t' +read2.seq + '\t' + barcode + '\t' + alu_seq + '\t' + 
 read1.cigar + '\t' + read2.cigar + '\t' + mdflag_r1 + '\t' + mdflag_r2 + '\n')
-                else:
-                    out_sam_error.write(read1)
-                    out_sam_error.write(read2)
+        else:
+            out_sam_error.write(read)
     in_sam_file.close()
     tablefile.close()
     out_sam_errorfile.close()
