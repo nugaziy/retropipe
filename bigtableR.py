@@ -49,10 +49,13 @@ def clustering(df, window, cluster_id, chrom, strand, table1, table2):
             else:
                 is_cluster_open = False
                 if len(set(pos_list))> 1 and len(set(info['alu'])) > 1:
+                    best_pos = list(dict(Counter(pos_list).most_common(1)).keys())[0]
+                    '''
                     pos_density = gaussian_kde(pos_list)
                     xs = np.linspace(min(pos_list) - 1, max(pos_list) + 1, len(pos_list) * 100)
                     pos_arr = np.column_stack((np.array(xs), np.array(pos_density(xs))))
                     best_pos = int(round(pos_arr[pos_arr[:, 1].argmax(), 0], 0))
+                    '''
                 else:
                     best_pos = pos_list[0]
                 info['barcode'] = list(set(info['barcode']))
@@ -81,10 +84,13 @@ str(len(info['barcode'])) + '\n')
                 info['alu'].append(row['ALU'])
     if is_cluster_open:
         if len(set(pos_list))> 1 and len(set(info['alu'])) > 1:
+            best_pos = list(dict(Counter(pos_list).most_common(1)).keys())[0]
+            '''
             pos_density = gaussian_kde(pos_list)
             xs = np.linspace(min(pos_list) - 1, max(pos_list) + 1, len(pos_list) * 100)
             pos_arr = np.column_stack((np.array(xs), np.array(pos_density(xs))))
             best_pos = int(round(pos_arr[pos_arr[:, 1].argmax(), 0], 0))
+            '''
         else:
             best_pos = pos_list[0]
         info['barcode'] = list(set(info['barcode']))
