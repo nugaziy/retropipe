@@ -84,8 +84,7 @@ def megaclustering(df, window, megacluster_id, chrom, strand, standart_alu, tabl
                     best_cigar = row['CIGAR_BEST']
             else:
                 is_cluster_open = False
-                if len(set(pos_list))> 1 and len(set(alu)) > 1:
-                    best_pos = list(dict(Counter(pos_list).most_common(1)).keys())[0]
+                if len(set(alu)) > 1:
                     alu_best = get_best_alu(alu, standart_alu)
                     '''
                     pos_density = gaussian_kde(pos_list)
@@ -94,8 +93,8 @@ def megaclustering(df, window, megacluster_id, chrom, strand, standart_alu, tabl
                     best_pos = int(round(pos_arr[pos_arr[:, 1].argmax(), 0], 0))
                     '''
                 else:
-                    best_pos = pos_list[0]
                     alu_best = {'seq' : str(alu[0]), 'amount' : 1, 'hamming' : hamming(str(alu[0]), standart_alu)}
+                best_pos = list(dict(Counter(pos_list).most_common(1)).keys())[0]
                 table.write(str(megacluster_id) + '\t' + 'chr' + chrom + '\t' + str(best_pos) + '\t' + 
 strand + '\t' + alu_best['seq'] + '\t' + str(alu_best['amount']) + '\t' + str(alu_best['hamming']) + '\t' + best_read1 + '\t' +
 best_read2 + '\t' + best_cigar + '\t' + best_mdflag + '\t' + 
@@ -125,8 +124,7 @@ best_read2 + '\t' + best_cigar + '\t' + best_mdflag + '\t' +
                 num_reads_by_files[index[0]] += int(row['NUM_READS'])
                 num_barcodes_by_files[index[0]] += int(row['NUM_BARCODES'])
     if is_cluster_open:
-        if len(set(pos_list))> 1 and len(set(alu)) > 1:
-            best_pos = list(dict(Counter(pos_list).most_common(1)).keys())[0]
+        if len(set(alu)) > 1:
             alu_best = get_best_alu(alu, standart_alu)
             '''
             pos_density = gaussian_kde(pos_list)
@@ -135,8 +133,8 @@ best_read2 + '\t' + best_cigar + '\t' + best_mdflag + '\t' +
             best_pos = int(round(pos_arr[pos_arr[:, 1].argmax(), 0], 0))
             '''
         else:
-            best_pos = pos_list[0]
             alu_best = {'seq' : str(alu[0]), 'amount' : 1, 'hamming' : hamming(str(alu[0]), standart_alu)}
+        best_pos = list(dict(Counter(pos_list).most_common(1)).keys())[0]
         table.write(str(megacluster_id) + '\t' + 'chr' + chrom + '\t' + str(best_pos) + '\t' + 
 strand + '\t' + alu_best['seq'] + '\t' + str(alu_best['amount']) + '\t' + str(alu_best['hamming']) + '\t' + best_read1 + '\t' +
 best_read2 + '\t' + best_cigar + '\t' + best_mdflag + '\t' + 
@@ -167,7 +165,10 @@ def main(inputdir, outputdir, window, standart_alu):
         'TLEN\tCIGAR_BEST\tMDFLAG_BEST\t' + 
 '\t'.join(x + '_NUM_READS'  + '\t' + x + '_NUM_BARCODES' for x in list(start_point.keys())) + '\n')
     megacluster_id = 0
-    for i_chrom in log_progress(range(22), name = 'megatable', every = 1, who = 'classes: chrom'):
+    chromline = range(1, 23)
+    chromline.append('X')
+    chromline.append('Y')
+    for i_chrom in log_progress(chromline, name = 'megatable', every = 1, who = 'classes: chrom'):
         bigdata_chrom = pd.DataFrame(columns = colnames)
         for filename in onlyfiles:
             filename = filename.rstrip()
@@ -176,12 +177,12 @@ def main(inputdir, outputdir, window, standart_alu):
                 data_index = inputfile.split('_bigtable_all')[0]
                 data = pd.read_table(inputdir + filename, skiprows = start_point[data_index], header = None)
                 data.columns = colnames
-                data_chrom = data[data['CHR'] == 'chr' + str(i_chrom + 1)]
+                data_chrom = data[data['CHR'] == 'chr' + str(i_chrom)]
                 start_point[data_index] += len(data_chrom)
                 bigdata_chrom = pd.concat([bigdata_chrom, pd.concat([data_chrom], keys=[data_index])])
         bigdata_group = bigdata_chrom.groupby(['STRAND'])
         for name, group in bigdata_group:
             group = group.sort_values(['POS'])
-            megacluster_id = megaclustering(group, window, megacluster_id, str(i_chrom + 1), name, standart_alu,
+            megacluster_id = megaclustering(group, window, megacluster_id, str(i_chrom), name, standart_alu,
              table, list(start_point.keys()))
     table.close()
