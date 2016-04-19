@@ -85,11 +85,14 @@ def megaclustering(df, window, megacluster_id, chrom, strand, standart_alu, tabl
             else:
                 is_cluster_open = False
                 if len(set(pos_list))> 1 and len(set(alu)) > 1:
+                    best_pos = list(dict(Counter(pos_list).most_common(1)).keys())[0]
+                    alu_best = get_best_alu(alu, standart_alu)
+                    '''
                     pos_density = gaussian_kde(pos_list)
                     xs = np.linspace(min(pos_list) - 1, max(pos_list) + 1, len(pos_list) * 100)
                     pos_arr = np.column_stack((np.array(xs), np.array(pos_density(xs))))
                     best_pos = int(round(pos_arr[pos_arr[:, 1].argmax(), 0], 0))
-                    alu_best = get_best_alu(alu, standart_alu)
+                    '''
                 else:
                     best_pos = pos_list[0]
                     alu_best = {'seq' : str(alu[0]), 'amount' : 1, 'hamming' : hamming(str(alu[0]), standart_alu)}
@@ -122,6 +125,18 @@ best_read2 + '\t' + best_cigar + '\t' + best_mdflag + '\t' +
                 num_reads_by_files[index[0]] += int(row['NUM_READS'])
                 num_barcodes_by_files[index[0]] += int(row['NUM_BARCODES'])
     if is_cluster_open:
+        if len(set(pos_list))> 1 and len(set(alu)) > 1:
+            best_pos = list(dict(Counter(pos_list).most_common(1)).keys())[0]
+            alu_best = get_best_alu(alu, standart_alu)
+            '''
+            pos_density = gaussian_kde(pos_list)
+            xs = np.linspace(min(pos_list) - 1, max(pos_list) + 1, len(pos_list) * 100)
+            pos_arr = np.column_stack((np.array(xs), np.array(pos_density(xs))))
+            best_pos = int(round(pos_arr[pos_arr[:, 1].argmax(), 0], 0))
+            '''
+        else:
+            best_pos = pos_list[0]
+            alu_best = {'seq' : str(alu[0]), 'amount' : 1, 'hamming' : hamming(str(alu[0]), standart_alu)}
         table.write(str(megacluster_id) + '\t' + 'chr' + chrom + '\t' + str(best_pos) + '\t' + 
 strand + '\t' + alu_best['seq'] + '\t' + str(alu_best['amount']) + '\t' + str(alu_best['hamming']) + '\t' + best_read1 + '\t' +
 best_read2 + '\t' + best_cigar + '\t' + best_mdflag + '\t' + 
