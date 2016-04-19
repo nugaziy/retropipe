@@ -85,7 +85,8 @@ def megaclustering(df, window, megacluster_id, chrom, strand, standart_alu, tabl
             else:
                 is_cluster_open = False
                 if len(set(alu)) > 1:
-                    alu_best = list(dict(Counter(alu).most_common(1)).keys())[0]
+                    alu_x = list(dict(Counter(alu).most_common(1)).keys())[0]
+                    alu_best = {'seq' : str(alu_x), 'amount' : 1, 'hamming' : hamming(str(alu_x), standart_alu)}
                      '''
                     pos_density = gaussian_kde(pos_list)
                     xs = np.linspace(min(pos_list) - 1, max(pos_list) + 1, len(pos_list) * 100)
@@ -125,7 +126,8 @@ best_read2 + '\t' + best_cigar + '\t' + best_mdflag + '\t' +
                 num_barcodes_by_files[index[0]] += int(row['NUM_BARCODES'])
     if is_cluster_open:
         if len(set(alu)) > 1:
-            alu_best = list(dict(Counter(alu).most_common(1)).keys())[0]
+            alu_x = list(dict(Counter(alu).most_common(1)).keys())[0]
+            alu_best = {'seq' : str(alu_x), 'amount' : 1, 'hamming' : hamming(str(alu_x), standart_alu)}
             '''
             pos_density = gaussian_kde(pos_list)
             xs = np.linspace(min(pos_list) - 1, max(pos_list) + 1, len(pos_list) * 100)
