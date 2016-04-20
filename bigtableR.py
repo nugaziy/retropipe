@@ -21,6 +21,8 @@ def clustering(df, window, cluster_id, chrom, strand, table1, table2):
             info = defaultdict(list)
             best_read1 = row['READ1']
             best_read2 = row['READ2']
+            best_fname = row['FILENAME']
+            best_rname = row['READNAME']
             best_tlen = row['TLEN']
             current_mdflag = row['MDFLAG_R1']
             best_mdflag_int = re.findall(r'\d+', current_mdflag)
@@ -42,25 +44,25 @@ def clustering(df, window, cluster_id, chrom, strand, table1, table2):
                 if current_mdflag_int > best_mdflag_int:
                     best_read1 = row['READ1']
                     best_read2 = row['READ2']
+                    best_fname = row['FILENAME']
+                    best_rname = row['READNAME']
                     best_tlen = row['TLEN']
                     best_mdflag_int = current_mdflag_int
                     best_mdflag = current_mdflag
                     best_cigar = row['CIGAR_R1']
             else:
                 is_cluster_open = False
-                if len(set(pos_list))> 1 and len(set(info['alu'])) > 1:
-                    best_pos = list(dict(Counter(pos_list).most_common(1)).keys())[0]
-                    '''
-                    pos_density = gaussian_kde(pos_list)
-                    xs = np.linspace(min(pos_list) - 1, max(pos_list) + 1, len(pos_list) * 100)
-                    pos_arr = np.column_stack((np.array(xs), np.array(pos_density(xs))))
-                    best_pos = int(round(pos_arr[pos_arr[:, 1].argmax(), 0], 0))
-                    '''
-                else:
-                    best_pos = pos_list[0]
+                best_pos = list(dict(Counter(pos_list).most_common(1)).keys())[0]
+                '''
+                pos_density = gaussian_kde(pos_list)
+                xs = np.linspace(min(pos_list) - 1, max(pos_list) + 1, len(pos_list) * 100)
+                pos_arr = np.column_stack((np.array(xs), np.array(pos_density(xs))))
+                best_pos = int(round(pos_arr[pos_arr[:, 1].argmax(), 0], 0))
+                '''
                 info['barcode'] = list(set(info['barcode']))
                 alu_dict = dict(Counter(info['alu']))
-                table1.write(str(cluster_id) + '\t' + chrom + '\t' + str(best_pos) + '\t' + strand + '\t' + 
+                table1.write(str(cluster_id) + '\t' + best_fname + '\t' + best_rname + '\t' + chrom + '\t' + 
+                    str(best_pos) + '\t' + strand + '\t' + 
 ','.join(str(key) for key, value in alu_dict.items()) + '\t' + ','.join(str(value) for key, value in alu_dict.items()) + '\t' + 
 best_read1 + '\t' + best_read2 + '\t' + str(best_tlen) + '\t' + best_cigar + '\t' + best_mdflag + '\t' + str(len(info['id'])) + '\t' +
 str(len(info['barcode'])) + '\n')
@@ -73,6 +75,8 @@ str(len(info['barcode'])) + '\n')
                 info = defaultdict(list)
                 best_read1 = row['READ1']
                 best_read2 = row['READ2']
+                best_fname = row['FILENAME']
+                best_rname = row['READNAME']
                 best_tlen = row['TLEN']
                 current_mdflag = row['MDFLAG_R1']
                 best_mdflag_int = re.findall(r'\d+', current_mdflag)
@@ -83,19 +87,17 @@ str(len(info['barcode'])) + '\n')
                 info['barcode'].append(row['BARCODE'])
                 info['alu'].append(row['ALU'])
     if is_cluster_open:
-        if len(set(pos_list))> 1 and len(set(info['alu'])) > 1:
-            best_pos = list(dict(Counter(pos_list).most_common(1)).keys())[0]
-            '''
-            pos_density = gaussian_kde(pos_list)
-            xs = np.linspace(min(pos_list) - 1, max(pos_list) + 1, len(pos_list) * 100)
-            pos_arr = np.column_stack((np.array(xs), np.array(pos_density(xs))))
-            best_pos = int(round(pos_arr[pos_arr[:, 1].argmax(), 0], 0))
-            '''
-        else:
-            best_pos = pos_list[0]
+        best_pos = list(dict(Counter(pos_list).most_common(1)).keys())[0]
+        '''
+        pos_density = gaussian_kde(pos_list)
+        xs = np.linspace(min(pos_list) - 1, max(pos_list) + 1, len(pos_list) * 100)
+        pos_arr = np.column_stack((np.array(xs), np.array(pos_density(xs))))
+        best_pos = int(round(pos_arr[pos_arr[:, 1].argmax(), 0], 0))
+        '''
         info['barcode'] = list(set(info['barcode']))
         alu_dict = dict(Counter(info['alu']))
-        table1.write(str(cluster_id) + '\t' + chrom + '\t' + str(best_pos) + '\t' + strand + '\t' + 
+        table1.write(str(cluster_id) + '\t' + best_fname + '\t' + best_rname + '\t' + chrom + '\t' + 
+            str(best_pos) + '\t' + strand + '\t' + 
 ','.join(str(key) for key, value in alu_dict.items()) + '\t' + ','.join(str(value) for key, value in alu_dict.items()) + '\t' + 
 best_read1 + '\t' + best_read2 + '\t' + str(best_tlen) + '\t' + best_cigar + '\t' + best_mdflag + '\t' + str(len(info['id'])) + '\t' +
 str(len(info['barcode'])) + '\n')
@@ -119,7 +121,7 @@ def main(inputdir, outputdir, window):
             table1_name = filename.split('_table')[0] + '_bigtable_all.txt'
             table2_name = filename.split('_table')[0] + '_bigtable_baralu.txt'
             table1 = open(outputdir + table1_name, 'w')
-            table1.write('CLUSTER_ID\tCHR\tPOS\tSTRAND\tALU_LIST\tALU_AMOUNT\tREAD1_BEST\tREAD2_BEST\tTLEN\t' + 
+            table1.write('CLUSTER_ID\tFILENAME\tREADNAME\tCHR\tPOS\tSTRAND\tALU_LIST\tALU_AMOUNT\tREAD1_BEST\tREAD2_BEST\tTLEN\t' + 
                 'CIGAR_BEST\tMDFLAG_BEST\tNUM_BARCODES\tNUM_READS\n')
             table2 = open(outputdir + table2_name, 'w')
             table2.write('CLUSTER_ID\tID_LIST\tBARCODE_LIST\n')

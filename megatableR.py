@@ -1,6 +1,7 @@
 import pandas as pd
 import re
 from collections import defaultdict
+from collections import Counter
 import sys, os, re
 from utils import *
 from os import listdir
@@ -57,6 +58,9 @@ def megaclustering(df, window, megacluster_id, chrom, strand, standart_alu, tabl
             info = defaultdict(list)
             best_read1 = row['READ1_BEST']
             best_read2 = row['READ2_BEST']
+            best_fname = row['FILENAME']
+            best_rname = row['READNAME']
+            best_tlen = row['TLEN']
             current_mdflag = row['MDFLAG_BEST']
             best_mdflag_int = re.findall(r'\d+', current_mdflag)
             best_mdflag_int = sum([ int(x) for x in best_mdflag_int ])
@@ -79,30 +83,33 @@ def megaclustering(df, window, megacluster_id, chrom, strand, standart_alu, tabl
                 if current_mdflag_int > best_mdflag_int:
                     best_read1 = row['READ1_BEST']
                     best_read2 = row['READ2_BEST']
+                    best_fname = row['FILENAME']
+                    best_rname = row['READNAME']
+                    best_tlen = row['TLEN']
                     best_mdflag_int = current_mdflag_int
                     best_mdflag = current_mdflag
                     best_cigar = row['CIGAR_BEST']
             else:
                 is_cluster_open = False
-                if len(set(alu)) > 1:
-                    alu_x = list(dict(Counter(alu).most_common(1)).keys())[0]
-                    alu_best = {'seq' : str(alu_x), 'amount' : 1, 'hamming' : hamming(str(alu_x), standart_alu)}
-                     '''
-                    pos_density = gaussian_kde(pos_list)
-                    xs = np.linspace(min(pos_list) - 1, max(pos_list) + 1, len(pos_list) * 100)
-                    pos_arr = np.column_stack((np.array(xs), np.array(pos_density(xs))))
-                    best_pos = int(round(pos_arr[pos_arr[:, 1].argmax(), 0], 0))
-                    '''
-                else:
-                    alu_best = {'seq' : str(alu[0]), 'amount' : 1, 'hamming' : hamming(str(alu[0]), standart_alu)}
+                alu_x = dict(Counter(alu).most_common(1))
+                alu_best = {'seq' : str(list(alu_x.keys())[0]), 'amount' : list(alu_x.values())[0],
+                 'hamming' : hamming(str(list(alu_x.keys())[0]), standart_alu)}
+                '''
+                pos_density = gaussian_kde(pos_list)
+                xs = np.linspace(min(pos_list) - 1, max(pos_list) + 1, len(pos_list) * 100)
+                pos_arr = np.column_stack((np.array(xs), np.array(pos_density(xs))))
+                best_pos = int(round(pos_arr[pos_arr[:, 1].argmax(), 0], 0))
+                '''
                 best_pos = list(dict(Counter(pos_list).most_common(1)).keys())[0]
-                table.write(str(megacluster_id) + '\t' + 'chr' + chrom + '\t' + str(best_pos) + '\t' + 
+                table.write(str(megacluster_id) + '\t' + best_fname + '\t' + best_rname + '\t' + 
+                    'chr' + chrom + '\t' + str(best_pos) + '\t' + 
 strand + '\t' + alu_best['seq'] + '\t' + str(alu_best['amount']) + '\t' + str(alu_best['hamming']) + '\t' + best_read1 + '\t' +
-best_read2 + '\t' + best_cigar + '\t' + best_mdflag + '\t' + 
+best_read2 + '\t' + str(best_tlen) + '\t' + best_cigar + '\t' + best_mdflag + '\t' + 
 '\t'.join(str(num_reads_by_files[x]) + '\t' + str(num_barcodes_by_files[x]) for x in files_name) + '\n')
                 is_cluster_open = True
                 num_reads_by_files = defaultdict()
                 num_barcodes_by_files = defaultdict()
+                alu = []
                 for i in files_name:
                     num_reads_by_files[i] = 0
                     num_barcodes_by_files[i] = 0
@@ -117,6 +124,9 @@ best_read2 + '\t' + best_cigar + '\t' + best_mdflag + '\t' +
                 info = defaultdict(list)
                 best_read1 = row['READ1_BEST']
                 best_read2 = row['READ2_BEST']
+                best_fname = row['FILENAME']
+                best_rname = row['READNAME']
+                best_tlen = row['TLEN']
                 current_mdflag = row['MDFLAG_BEST']
                 best_mdflag_int = re.findall(r'\d+', current_mdflag)
                 best_mdflag_int = sum([ int(x) for x in best_mdflag_int ])
@@ -125,21 +135,20 @@ best_read2 + '\t' + best_cigar + '\t' + best_mdflag + '\t' +
                 num_reads_by_files[index[0]] += int(row['NUM_READS'])
                 num_barcodes_by_files[index[0]] += int(row['NUM_BARCODES'])
     if is_cluster_open:
-        if len(set(alu)) > 1:
-            alu_x = list(dict(Counter(alu).most_common(1)).keys())[0]
-            alu_best = {'seq' : str(alu_x), 'amount' : 1, 'hamming' : hamming(str(alu_x), standart_alu)}
-            '''
-            pos_density = gaussian_kde(pos_list)
-            xs = np.linspace(min(pos_list) - 1, max(pos_list) + 1, len(pos_list) * 100)
-            pos_arr = np.column_stack((np.array(xs), np.array(pos_density(xs))))
-            best_pos = int(round(pos_arr[pos_arr[:, 1].argmax(), 0], 0))
-            '''
-        else:
-            alu_best = {'seq' : str(alu[0]), 'amount' : 1, 'hamming' : hamming(str(alu[0]), standart_alu)}
+        alu_x = dict(Counter(alu).most_common(1))
+        alu_best = {'seq' : str(list(alu_x.keys())[0]), 'amount' : list(alu_x.values())[0],
+         'hamming' : hamming(str(list(alu_x.keys())[0]), standart_alu)}
+        '''
+        pos_density = gaussian_kde(pos_list)
+        xs = np.linspace(min(pos_list) - 1, max(pos_list) + 1, len(pos_list) * 100)
+        pos_arr = np.column_stack((np.array(xs), np.array(pos_density(xs))))
+        best_pos = int(round(pos_arr[pos_arr[:, 1].argmax(), 0], 0))
+        '''
         best_pos = list(dict(Counter(pos_list).most_common(1)).keys())[0]
-        table.write(str(megacluster_id) + '\t' + 'chr' + chrom + '\t' + str(best_pos) + '\t' + 
+        table.write(str(megacluster_id) + '\t' + best_fname + '\t' + best_rname + '\t' + 
+            'chr' + chrom + '\t' + str(best_pos) + '\t' + 
 strand + '\t' + alu_best['seq'] + '\t' + str(alu_best['amount']) + '\t' + str(alu_best['hamming']) + '\t' + best_read1 + '\t' +
-best_read2 + '\t' + best_cigar + '\t' + best_mdflag + '\t' + 
+best_read2 + '\t' + str(best_tlen) + '\t' + best_cigar + '\t' + best_mdflag + '\t' + 
 '\t'.join(str(num_reads_by_files[x]) + '\t' + str(num_barcodes_by_files[x]) for x in files_name)+ '\n')
     return (megacluster_id)
 
@@ -153,7 +162,7 @@ def main(inputdir, outputdir, window, standart_alu):
     # Read files in folder
     onlyfiles = [f for f in listdir(inputdir) if isfile(join(inputdir, f))]
     
-    colnames = ['CLUSTER_ID', 'CHR', 'POS', 'STRAND', 'ALU_LIST', 'ALU_AMOUNT',
+    colnames = ['CLUSTER_ID', 'FILENAME', 'READNAME', 'CHR', 'POS', 'STRAND', 'ALU_LIST', 'ALU_AMOUNT',
     'READ1_BEST', 'READ2_BEST', 'TLEN', 'CIGAR_BEST', 'MDFLAG_BEST', 'NUM_READS', 'NUM_BARCODES']
     table = open(outputdir + 'megatable.txt', 'w')
     start_point = defaultdict()
@@ -163,11 +172,11 @@ def main(inputdir, outputdir, window, standart_alu):
         if ext == '.txt' and re.search('_bigtable_all', inputfile):
             data_index = inputfile.split('_bigtable_all')[0]
             start_point[data_index] = 0
-    table.write('MEGACLUSTER_ID\tCHR\tPOS\tSTRAND\tALU_BEST\tALU_AMOUNT\tALU_HAMMING\tREAD1_BEST\tREAD2_BEST\t' + 
+    table.write('MEGACLUSTER_ID\tFILENAME\tREADNAME\tCHR\tPOS\tSTRAND\tALU_BEST\tALU_AMOUNT\tALU_HAMMING\tREAD1_BEST\tREAD2_BEST\t' + 
         'TLEN\tCIGAR_BEST\tMDFLAG_BEST\t' + 
 '\t'.join(x + '_NUM_READS'  + '\t' + x + '_NUM_BARCODES' for x in list(start_point.keys())) + '\n')
     megacluster_id = 0
-    chromline = range(1, 23)
+    chromline = list(range(1, 23))
     chromline.append('X')
     chromline.append('Y')
     for i_chrom in log_progress(chromline, name = 'megatable', every = 1, who = 'classes: chrom'):
@@ -177,7 +186,7 @@ def main(inputdir, outputdir, window, standart_alu):
             inputfile, ext = os.path.splitext(filename)
             if ext == '.txt' and re.search('_bigtable_all', inputfile):
                 data_index = inputfile.split('_bigtable_all')[0]
-                data = pd.read_table(inputdir + filename, skiprows = start_point[data_index], header = None)
+                data = pd.read_table(inputdir + filename, skiprows = 1, header = None)
                 data.columns = colnames
                 data_chrom = data[data['CHR'] == 'chr' + str(i_chrom)]
                 start_point[data_index] += len(data_chrom)

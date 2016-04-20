@@ -4,13 +4,14 @@ from utils import *
 from os import listdir
 from os.path import isfile, join
 
-def sam2table(inputdir, in_sam_filename, outputdir, tablefilename, out_sam_errorfilename):
+def sam2table(inputdir, in_sam_filename, outputdir, tablefilename, out_sam_errorfilename, inputfile):
     in_sam_file = open(inputdir + in_sam_filename, 'r')
     tablefile = open(outputdir + tablefilename, 'w')
     out_sam_errorfile = open(outputdir + out_sam_errorfilename, 'w')
     in_sam = Reader(in_sam_file)
     out_sam_error = Writer(out_sam_errorfile)
-    tablefile.write('ID\tCHR\tPOS\tSTRAND\tREAD1\tREAD2\tBARCODE\tALU\tTLEN\tCIGAR_R1\tCIGAR_R2\tMDFLAG_R1\tMDFLAG_R2\n')
+    tablefile.write('ID\tFILENAME\tREADNAME\tCHR\tPOS\tSTRAND\tREAD1\tREAD2' + 
+        '\tBARCODE\tALU\tTLEN\tCIGAR_R1\tCIGAR_R2\tMDFLAG_R1\tMDFLAG_R2\n')
     id_count = 0
     for read in log_progress(in_sam, name = in_sam_filename, size = count_fastq_records(inputdir + in_sam_filename), every = 250):
         if read.flag in [99, 83]:
@@ -32,7 +33,8 @@ def sam2table(inputdir, in_sam_filename, outputdir, tablefilename, out_sam_error
                 id_count += 1
                 mdflag_r1 = read1._tags[1]
                 mdflag_r2 = read2._tags[1]
-                tablefile.write(str(int(id_count)) + '\t' + read1.rname + '\t' + str(pos) + '\t' + strand + '\t' + 
+                tablefile.write(str(int(id_count)) + '\t' + inputfile + '\t' + read.qname + '\t' + 
+                    read1.rname + '\t' + str(pos) + '\t' + strand + '\t' + 
 read1.seq + '\t' +read2.seq + '\t' + barcode + '\t' + alu_seq + '\t' + str(abs(read1.tlen)) + '\t' + 
 read1.cigar + '\t' + read2.cigar + '\t' + mdflag_r1 + '\t' + mdflag_r2 + '\n')
             else:
@@ -58,4 +60,4 @@ def main(inputdir, outputdir):
             in_sam_filename = filename
             tablefilename = inputfile + '_table.txt'
             out_sam_errorfilename = inputfile + '_error.sam'
-            sam2table(inputdir, in_sam_filename, outputdir, tablefilename, out_sam_errorfilename)
+            sam2table(inputdir, in_sam_filename, outputdir, tablefilename, out_sam_errorfilename, inputfile)
