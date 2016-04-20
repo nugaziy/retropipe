@@ -25,14 +25,14 @@ def main(inputtable, inputlibrary, outputdir, window):
 		 for start, end, data in zip(start_group, end_group, list(group['MEGACLUSTER_ID'])))
 
 	for filename in onlyfiles:
-		repcolumn = {x : 'NA' for x in megatable_id}
+		repcolumn = {x : 'Unknown' for x in megatable_id}
 		filename = filename.rstrip()
 		inputfile, ext = os.path.splitext(filename)
 		replib = pd.read_table(inputlibrary + filename)
 		replib_group = replib.groupby(['CHR', 'STRAND'])
 		for name, group in log_progress(replib_group, name = 'For lib - ' + inputfile, every = 1, who = 'classes: chrom & strand'):
 			if name[0] + name[1] in tree_dict:
-				if name[0] == '+':
+				if str(name[1]) == '+':
 					point = zip(list(group['START']), list(group['NAME']))
 				else:
 					point = zip(list(group['END']), list(group['NAME']))
