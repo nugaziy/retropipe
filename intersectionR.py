@@ -5,7 +5,7 @@ from os import listdir
 from os.path import isfile, join
 from utils import *
 
-def main(inputtable, inputlibrary, outputdir, window):
+def main(inputtable, inputlibrary, outputdir, outputtable, inswindow, readwindow):
 	inputlibrary += "/"
 	outputdir += "/"
 
@@ -19,8 +19,12 @@ def main(inputtable, inputlibrary, outputdir, window):
 	megatable_group = megatable.groupby(['CHR', 'STRAND'])
 	tree_dict = {}
 	for name, group in  log_progress(megatable_group, name = 'Create tree_list with', every = 1, who = 'classes: chrom & strand'):
-		start_group = [x - window for x in list(group['POS'])]
-		end_group = [x + window for x in list(group['POS'])]
+		if name[1] == '+':
+			start_group = [x - readwindow for x in list(group['POS'])]
+			end_group = [x + inswindow for x in list(group['POS'])]
+		else:
+			start_group = [x - inswindow for x in list(group['POS'])]
+			end_group = [x + readwindow for x in list(group['POS'])]
 		tree_dict[name[0] + name[1]] = it.IntervalTree(it.Interval(start, end, data)
 		 for start, end, data in zip(start_group, end_group, list(group['MEGACLUSTER_ID'])))
 
@@ -44,6 +48,6 @@ def main(inputtable, inputlibrary, outputdir, window):
 		repcolumn = {inputfile : list(repcolumn.values())}
 		repcolumn_df = pd.DataFrame(repcolumn)
 		megatable = megatable.join(repcolumn_df)
-	table = open(outputdir + 'megatable_inter_lib.txt', 'w')
+	table = open(outputdir + outputtable, 'w')
 	table.close()
-	megatable.to_csv(outputdir + 'megatable_inter_lib.txt', index=None, sep='\t', mode='a')
+	megatable.to_csv(outputdir + outputtable, index=None, sep='\t', mode='a')
