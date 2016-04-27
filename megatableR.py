@@ -252,7 +252,7 @@ best_read2 + '\t' + str(best_tlen) + '\t' + best_cigar + '\t' + best_mdflag + '\
     return (megacluster_id)
 
 
-def main(inputdir, outputdir, window, standart_alu):
+def main(inputdir, outputdir, outputtable, window, standart_alu):
     #test
     inputdir += "/"
     outputdir += "/"
@@ -263,8 +263,9 @@ def main(inputdir, outputdir, window, standart_alu):
     
     colnames = ['CLUSTER_ID', 'ID_LIST', 'FILENAME', 'READNAME', 'CHR', 'POS', 'STRAND', 'READ1_BEST', 'READ2_BEST', 'TLEN', 
                 'CIGAR_BEST', 'MDFLAG_BEST', 'NUM_BARCODES', 'NUM_READS', 'ALU_LIST', 'ALU_AMOUNT', 'BARCODE_LIST', 'BARCODE_AMOUNT']
-    table1 = open(outputdir + 'megatable_humanread.txt', 'w')
-    table2 = open(outputdir + 'megatable_pcread.txt', 'w')
+    outputtable, ext = os.path.splitext(outputtable)
+    table1 = open(outputdir + outputtable + '_humanread.txt', 'w')
+    table2 = open(outputdir + outputtable + '_pcread.txt', 'w')
     start_point = defaultdict()
     for filename in onlyfiles:
         filename = filename.rstrip()
