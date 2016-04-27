@@ -31,7 +31,7 @@ def main(inputtable):
 
 	k = 0
 	k_1 = 0
-	for index, row in megatable.iterrows():
+	for index, row in log_progress(megatable.iterrows(), name = inputtable, every = 250):
 		k += 1
 		barcode = row['BARCODE_LIST'].split(',')
 		hamming_table = pd.DataFrame(columns = barcode, index = barcode)
