@@ -61,9 +61,10 @@ def clustering(df, window, cluster_id, chrom, strand, table1, table2):
                 '''
                 barcode_dict = dict(Counter(info['barcode']))
                 alu_dict = dict(Counter(info['alu']))
+                barcode_set = set(info['barcode'])
                 table1.write(str(cluster_id) + '\t' + best_rname + '\t' + chrom + '\t' + str(best_pos) + '\t' + strand + '\t' + 
                     best_read1 + '\t' + best_read2 + '\t' + str(best_tlen) + '\t' + 
-                    best_cigar + '\t' + best_mdflag + '\t' + str(len(info['id'])) + '\t' + str(len(info['barcode'])) + '\n')
+                    best_cigar + '\t' + best_mdflag + '\t' + str(len(info['id'])) + '\t' + str(len(barcode_set)) + '\n')
                 table2.write(str(cluster_id) + '\t' + ','.join(str(x) for x in info['id']) + '\t' + best_fname + '\t' + 
                     best_rname + '\t' + chrom + '\t' + str(best_pos) + '\t' + strand + '\t' + 
                     best_read1 + '\t' + best_read2 + '\t' + str(best_tlen) + '\t' + 
@@ -100,9 +101,10 @@ def clustering(df, window, cluster_id, chrom, strand, table1, table2):
         '''
         barcode_dict = dict(Counter(info['barcode']))
         alu_dict = dict(Counter(info['alu']))
+        barcode_set = set(info['barcode'])
         table1.write(str(cluster_id) + '\t' + best_rname + '\t' + chrom + '\t' + str(best_pos) + '\t' + strand + '\t' + 
             best_read1 + '\t' + best_read2 + '\t' + str(best_tlen) + '\t' + 
-            best_cigar + '\t' + best_mdflag + '\t' + str(len(info['id'])) + '\t' + str(len(info['barcode'])) + '\n')
+            best_cigar + '\t' + best_mdflag + '\t' + str(len(info['id'])) + '\t' + str(len(barcode_set)) + '\n')
         table2.write(str(cluster_id) + '\t' + ','.join(str(x) for x in info['id']) + '\t' + best_fname + '\t' + 
             best_rname + '\t' + chrom + '\t' + str(best_pos) + '\t' + strand + '\t' + 
             best_read1 + '\t' + best_read2 + '\t' + str(best_tlen) + '\t' + 
