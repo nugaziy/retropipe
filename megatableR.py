@@ -84,7 +84,7 @@ def megaclustering(df, window, megacluster_id, chrom, strand, standart_alu, tabl
             best_mdflag_int = sum([ int(x) for x in best_mdflag_int ])
             best_mdflag = current_mdflag
             best_cigar = row['CIGAR_BEST']
-            #num_reads_by_files[index[0]] += int(row['NUM_READS'])
+            num_reads_by_files[index[0]] += int(row['NUM_READS'])
             #num_barcodes_by_files[index[0]] += int(row['NUM_BARCODES'])
             if filecluster_list[index[0]] == '0':
                 filecluster_list[index[0]] = str(int(row['CLUSTER_ID']))
@@ -139,10 +139,6 @@ def megaclustering(df, window, megacluster_id, chrom, strand, standart_alu, tabl
                 for i in files_name:
                     num_barcodes_by_files[i] = len(set(barcode[i])) - 1
                     barcode[i] = dict(Counter(barcode[i]))
-                    if filecluster_list[i] == '0':
-                        num_reads_by_files[i] = 0
-                    else:
-                        num_reads_by_files[i] = len(filecluster_list[i].split(','))
                 barcode_final = defaultdict()
                 for key, value in barcode.items():
                     value_bc = list(value.keys())
@@ -206,7 +202,7 @@ best_read2 + '\t' + str(best_tlen) + '\t' + best_cigar + '\t' + best_mdflag + '\
                 best_mdflag_int = sum([ int(x) for x in best_mdflag_int ])
                 best_mdflag = current_mdflag
                 best_cigar = row['CIGAR_BEST']
-                #num_reads_by_files[index[0]] += int(row['NUM_READS'])
+                num_reads_by_files[index[0]] += int(row['NUM_READS'])
                 #num_barcodes_by_files[index[0]] += int(row['NUM_BARCODES'])
                 if filecluster_list[index[0]] == '0':
                     filecluster_list[index[0]] = str(int(row['CLUSTER_ID']))
@@ -226,10 +222,6 @@ best_read2 + '\t' + str(best_tlen) + '\t' + best_cigar + '\t' + best_mdflag + '\
         for i in files_name:
             num_barcodes_by_files[i] = len(set(barcode[i])) - 1
             barcode[i] = dict(Counter(barcode[i]))
-            if filecluster_list[i] == '0':
-                num_reads_by_files[i] = 0
-            else:
-                num_reads_by_files[i] = len(filecluster_list[i].split(','))
         barcode_final = defaultdict()
         for key, value in barcode.items():
             value_bc = list(value.keys())
