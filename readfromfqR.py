@@ -7,25 +7,25 @@ from utils import *
 import multiprocessing as mp
 import pandas as pd
 
-def recovery(df, inputdir, filename1, filename2, name):
+def recovery(df, inputdirfq, filename1, filename2, name):
 	df_index = df.index
 	df = df.set_index(df['READNAME'])
-	R1_reads = SeqIO.parse(inputdir + filename1, "fastq")
-	R2_reads = SeqIO.parse(inputdir + filename2, "fastq")
+	R1_reads = SeqIO.parse(inputdirfq + filename1, "fastq")
+	R2_reads = SeqIO.parse(inputdirfq + filename2, "fastq")
 	for r1, r2 in log_progress(zip(R1_reads, R2_reads),
-     name = name, size = count_fastq_records(inputdir + filename1), every = 250):
+     name = name, size = count_fastq_records(inputdirfq + filename1), every = 250):
 		if r1.id in df['READNAME']:
 			df.set_value(r1.id, 'READ1', r1.seq)
 			df.set_value(r1.id, 'READ2', r2.seq)
 	df = df.set_index(df_index)
 	return (df)
 
-def main(inputtable, inputdir, outputdir):
-	inputdir += "/"
+def main(inputtable, inputdirfq, outputdir, outputtable):
+	inputdirfq += "/"
 	outputdir += "/"
 
 	# Read files in folder
-	onlyfiles = [f for f in listdir(inputdir) if isfile(join(inputdir, f))]
+	onlyfiles = [f for f in listdir(inputdirfq) if isfile(join(inputdirfq, f))]
 
 	r1_files = {}
 	r2_files = {}
@@ -71,11 +71,12 @@ def main(inputtable, inputdir, outputdir):
 		if name in list(filedict.keys()):
 			file1 = list(filedict[name])[0]
 			file2 = list(filedict[name])[1]
-			df_new = recovery(group, inputdir, file1, file2, name)
-			print(list(df_new.columns.values))
+			df_new = recovery(group, inputdirfq, file1, file2, name)
 			data_new = data_new.append(df_new)
 
-
-	table = open(outputdir + 'megatable_fq.txt', 'w')
+	data_new = data_new.fillna(0)
+	table = open(outputdir + outputtable, 'w')
 	table.close()
-	data_new.to_csv(outputdir + 'megatable_fq.txt', index=None, columns = list(data.columns.values), sep='\t', mode='a')
+	data_new.to_csv(outputdir + outputtable, index=None, columns = list(data.columns.values), sep='\t', mode='a')
+
+
