@@ -76,6 +76,7 @@ def main(inputtable, primer, main_flank_len, refway, outputdir, outputtable, mem
 			mdmatch_index = mdmatch.index(max(mdmatch))
 			mdcolumn[int(index)] = str(minitable['MDFLAG'].values[mdmatch_index])
 
+	mdcolumn = {'MDFLAG_MATRIX' : mdcolumn}
 	mdcolumn_df = pd.DataFrame(mdcolumn)
 	megatable = megatable.join(mdcolumn_df)
 
