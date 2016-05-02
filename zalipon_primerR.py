@@ -36,6 +36,7 @@ def main(inputtable, referencefile, primer, window, outputdir, outputtable):
 			start = pos + 1
 			end = pos + window
 			seq = Seq(reference.fetch(row['CHR'], start, end))
+			seq = seq.reverse_complement()
 			seq = str(seq).upper()
 		else:
 			start = pos - window
