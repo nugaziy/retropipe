@@ -9,7 +9,7 @@ import pandas as pd
 import subprocess
 from simplesam import Reader, Writer
 
-def main(inputtable, primer, main_flank_len, refway, outputdir, outputtable, memline):
+def main(inputtable, primer, main_flank_len, refway, outputdir, outputtable, bwaway):
 	outputdir += "/"
 
 	if not os.path.exists(outputdir):
@@ -34,12 +34,20 @@ def main(inputtable, primer, main_flank_len, refway, outputdir, outputtable, mem
 	tablefq.close()
 
 	logfile = open(outputdir + 'bwa_zalipon_output.log', 'w')
+	logfile.write("##### BWA ALN #####")
 
-	bwamem = memline + ' ' + refway + ' ' + outputdir + outputtablename + '_zalipon.fq' + ' > ' + outputdir + outputtablename + '.sam'
-	print (bwamem)
-	p = subprocess.Popen (bwamem, stderr=subprocess.PIPE, shell = True)
-	logline = p.stderr.read().decode()
+	bwaaln = bwaway + ' aln ' + refway + ' ' + outputdir + outputtablename + '_zalipon.fq' + ' > ' + outputdir + outputtablename + '.sai'
+	print (bwaaln)
+	p_aln = subprocess.Popen(bwaaln, stderr=subprocess.PIPE, shell = True)
+	logline = p_aln.stderr.read().decode()
 	print (logline)
+	logfile.write(logline)
+	logfile.write("##### BWA SAMSE #####")
+	bwasamse = bwaway + ' samse ' + refway + ' ' + outputdir + outputtablename + '.sai' + ' ' + outputdir + outputtablename + '_zalipon.fq' + ' > ' + outputdir + outputtablename + '.sam'
+	print(bwasamse)
+	p_samse = subprocess.Popen(bwasamse, stderr=subprocess.PIPE, shell = True)
+	logline = p_samse.stderr.read().decode()
+	print(logline)
 	logfile.write(logline)
 	logfile.close()
 
@@ -53,7 +61,11 @@ def main(inputtable, primer, main_flank_len, refway, outputdir, outputtable, mem
 	 size = count_fastq_records(inputtable) * 4, every = 1):
 		megacluster_id = read.qname.split('__')[3]
 		if read.mapped:
-			mdflag = read._tags
+			for x in read._tags:
+				if re.search('MD', x):
+					mdflag = x
+				else:
+					mdflag = '*'
 			match = re.findall(r'\d+', mdflag)
 			match = sum([ int(x) for x in match])
 		else:
