@@ -85,7 +85,6 @@ def megaclustering(df, window, megacluster_id, chrom, strand, standart_alu, tabl
             best_mdflag = current_mdflag
             best_cigar = row['CIGAR_BEST']
             num_reads_by_files[index[0]] += int(row['NUM_READS'])
-            #num_barcodes_by_files[index[0]] += int(row['NUM_BARCODES'])
             if filecluster_list[index[0]] == '0':
                 filecluster_list[index[0]] = str(int(row['CLUSTER_ID']))
             else:
@@ -97,7 +96,6 @@ def megaclustering(df, window, megacluster_id, chrom, strand, standart_alu, tabl
                 current_mdflag_int = re.findall(r'\d+', current_mdflag)
                 current_mdflag_int = sum([ int(x) for x in current_mdflag_int ])
                 num_reads_by_files[index[0]] += int(row['NUM_READS'])
-                num_barcodes_by_files[index[0]] += int(row['NUM_BARCODES'])
                 # transform alu_list and extend
                 alu_list = np.asarray(row['ALU_LIST'].split(','))
                 alu_amount = row['ALU_AMOUNT'].split(',')
@@ -203,7 +201,6 @@ best_read2 + '\t' + str(best_tlen) + '\t' + best_cigar + '\t' + best_mdflag + '\
                 best_mdflag = current_mdflag
                 best_cigar = row['CIGAR_BEST']
                 num_reads_by_files[index[0]] += int(row['NUM_READS'])
-                #num_barcodes_by_files[index[0]] += int(row['NUM_BARCODES'])
                 if filecluster_list[index[0]] == '0':
                     filecluster_list[index[0]] = str(int(row['CLUSTER_ID']))
                 else:
