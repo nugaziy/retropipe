@@ -251,7 +251,7 @@ def main(inputdir, outputdir, outputtable, window, standart_alu):
     onlyfiles = [f for f in listdir(inputdir) if isfile(join(inputdir, f))]
     
     colnames = ['CLUSTER_ID', 'ID_LIST', 'FILENAME', 'READNAME', 'CHR', 'POS', 'STRAND', 'READ1_BEST', 'READ2_BEST', 'TLEN', 
-                'CIGAR_BEST', 'MDFLAG_BEST', 'NUM_BARCODES', 'NUM_READS', 'ALU_LIST', 'ALU_AMOUNT', 'BARCODE_LIST', 'BARCODE_AMOUNT']
+                'CIGAR_BEST', 'MDFLAG_BEST', 'NUM_READS', 'NUM_BARCODES', 'ALU_LIST', 'ALU_AMOUNT', 'BARCODE_LIST', 'BARCODE_AMOUNT']
     outputtable, ext = os.path.splitext(outputtable)
     table1 = open(outputdir + outputtable + '_humanread.txt', 'w')
     table2 = open(outputdir + outputtable + '_pcread.txt', 'w')
