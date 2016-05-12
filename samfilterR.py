@@ -11,7 +11,7 @@ def sam2table(inputdir, in_sam_filename, outputdir, tablefilename, out_sam_error
     in_sam = Reader(in_sam_file)
     out_sam_error = Writer(out_sam_errorfile)
     tablefile.write('ID\tFILENAME\tREADNAME\tCHR\tPOS\tSTRAND\tREAD1\tREAD2' + 
-        '\tBARCODE\tALU\tTLEN\tCIGAR_R1\tCIGAR_R2\tMDFLAG_R1\tMDFLAG_R2\n')
+        '\tBARCODE\tBARCODE_Q\tALU\tTLEN\tCIGAR_R1\tCIGAR_R2\tMDFLAG_R1\tMDFLAG_R2\n')
     id_count = 0
     for read in log_progress(in_sam, name = in_sam_filename, size = count_fastq_records(inputdir + in_sam_filename), every = 250):
         if read.flag in [99, 83]:
@@ -21,8 +21,9 @@ def sam2table(inputdir, in_sam_filename, outputdir, tablefilename, out_sam_error
             read2 = read
             if read1_bool and read1.qname == read2.qname:
                 read1_bool = False
-                barcode = read2.qname.split('__ab:')[2]
-                alu_seq = read1.qname.split('__ab:')[1]
+                barcode = read2.qname.split('__abq:')[2]
+                barcode_q = read2.qname.split('__abq:')[3]
+                alu_seq = read1.qname.split('__abq:')[1]
                 if read1.reverse:
                     # it's strand of insertion (not read)
                     strand = '+'
@@ -35,7 +36,7 @@ def sam2table(inputdir, in_sam_filename, outputdir, tablefilename, out_sam_error
                 mdflag_r2 = read2._tags[1]
                 tablefile.write(str(int(id_count)) + '\t' + inputfile + '\t' + read.qname + '\t' + 
                     read1.rname + '\t' + str(pos) + '\t' + strand + '\t' + 
-read1.seq + '\t' +read2.seq + '\t' + barcode + '\t' + alu_seq + '\t' + str(abs(read1.tlen)) + '\t' + 
+read1.seq + '\t' +read2.seq + '\t' + barcode + '\t' + barcode_q + '\t' + alu_seq + '\t' + str(abs(read1.tlen)) + '\t' + 
 read1.cigar + '\t' + read2.cigar + '\t' + mdflag_r1 + '\t' + mdflag_r2 + '\n')
             else:
                 out_sam_error.write(read1)

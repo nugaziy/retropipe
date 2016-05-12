@@ -31,12 +31,14 @@ def clustering(df, window, cluster_id, chrom, strand, table1, table2):
             best_cigar = row['CIGAR_R1']
             info['id'].append(row['ID'])
             info['barcode'].append(row['BARCODE'])
+            info['barcode_q'].append(row['BARCODE_Q'])
             info['alu'].append(row['ALU'])
         else:
             if abs(row['POS'] - pos) <= window:
                 pos_list.append(row['POS'])
                 info['id'].append(row['ID'])
                 info['barcode'].append(row['BARCODE'])
+                info['barcode_q'].append(row['BARCODE_Q'])
                 info['alu'].append(row['ALU'])
                 current_mdflag = row['MDFLAG_R1']
                 current_mdflag_int = re.findall(r'\d+', current_mdflag)
@@ -59,7 +61,6 @@ def clustering(df, window, cluster_id, chrom, strand, table1, table2):
                 pos_arr = np.column_stack((np.array(xs), np.array(pos_density(xs))))
                 best_pos = int(round(pos_arr[pos_arr[:, 1].argmax(), 0], 0))
                 '''
-                barcode_dict = dict(Counter(info['barcode']))
                 alu_dict = dict(Counter(info['alu']))
                 barcode_set = set(info['barcode'])
                 table1.write(str(cluster_id) + '\t' + best_rname + '\t' + chrom + '\t' + str(best_pos) + '\t' + strand + '\t' + 
@@ -71,8 +72,8 @@ def clustering(df, window, cluster_id, chrom, strand, table1, table2):
                     best_cigar + '\t' + best_mdflag + '\t' + str(len(info['id'])) + '\t' + str(len(barcode_set)) + '\t' + 
                     ','.join(str(key) for key, value in alu_dict.items()) + '\t' + 
                     ','.join(str(value) for key, value in alu_dict.items()) + '\t' + 
-                    ','.join(str(key) for key, value in barcode_dict.items()) + '\t' + 
-                    ','.join(str(value) for key, value in barcode_dict.items()) + '\n')
+                    ''.join(str(x) for x in info['barcode']) + '\t' + 
+                    ''.join(str(x) for x in info['barcode_q']) + '\n')
                 is_cluster_open = True
                 cluster_id += 1
                 pos = row['POS']
@@ -90,6 +91,7 @@ def clustering(df, window, cluster_id, chrom, strand, table1, table2):
                 best_cigar = row['CIGAR_R1']
                 info['id'].append(row['ID'])
                 info['barcode'].append(row['BARCODE'])
+                info['barcode_q'].append(row['BARCODE_Q'])
                 info['alu'].append(row['ALU'])
     if is_cluster_open:
         best_pos = list(dict(Counter(pos_list).most_common(1)).keys())[0]
@@ -99,7 +101,6 @@ def clustering(df, window, cluster_id, chrom, strand, table1, table2):
         pos_arr = np.column_stack((np.array(xs), np.array(pos_density(xs))))
         best_pos = int(round(pos_arr[pos_arr[:, 1].argmax(), 0], 0))
         '''
-        barcode_dict = dict(Counter(info['barcode']))
         alu_dict = dict(Counter(info['alu']))
         barcode_set = set(info['barcode'])
         table1.write(str(cluster_id) + '\t' + best_rname + '\t' + chrom + '\t' + str(best_pos) + '\t' + strand + '\t' + 
@@ -111,8 +112,8 @@ def clustering(df, window, cluster_id, chrom, strand, table1, table2):
             best_cigar + '\t' + best_mdflag + '\t' + str(len(info['id'])) + '\t' + str(len(barcode_set)) + '\t' + 
             ','.join(str(key) for key, value in alu_dict.items()) + '\t' + 
             ','.join(str(value) for key, value in alu_dict.items()) + '\t' + 
-            ','.join(str(key) for key, value in barcode_dict.items()) + '\t' + 
-            ','.join(str(value) for key, value in barcode_dict.items()) + '\n')
+            ''.join(str(x) for x in info['barcode']) + '\t' + 
+            ''.join(str(x) for x in info['barcode_q']) + '\n')
     return (cluster_id)
 
 
@@ -135,7 +136,7 @@ def main(inputdir, outputdir, window):
                 'CIGAR_BEST\tMDFLAG_BEST\tNUM_READS\tNUM_BARCODES\n')
             table2 = open(outputdir + table2_name, 'w')
             table2.write('CLUSTER_ID\tID_LIST\tFILENAME\tREADNAME\tCHR\tPOS\tSTRAND\tREAD1_BEST\tREAD2_BEST\tTLEN\t' + 
-                'CIGAR_BEST\tMDFLAG_BEST\tNUM_READS\tNUM_BARCODES\tALU_LIST\tALU_AMOUNT\tBARCODE_LIST\tBARCODE_AMOUNT\n')
+                'CIGAR_BEST\tMDFLAG_BEST\tNUM_READS\tNUM_BARCODES\tALU_LIST\tALU_AMOUNT\tBARCODE_LIST\tBARCODE_AMOUNT\tBARCODE_Q\n')
             data = pd.read_table(inputdir + filename)
             data_group = data.groupby(['CHR', 'STRAND'])
             cluster_id = 0
