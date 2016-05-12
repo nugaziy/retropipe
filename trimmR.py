@@ -36,7 +36,7 @@ def trim_primers (record, primer, shift, m, elem_remove, search_win):
                     return (info(good = False, read = None, alu_barcode = None,
                             errors = np.array([0, 0, 0, 0, 1])))
             record = record[len_primer + 6 + i :]
-            alu_bar = '__ab:' + str(alu)
+            alu_bar = '__abq:' + str(alu)
             record.description = ''
             record.name = ''
             return (info(good = True, read = record, alu_barcode = alu_bar,
@@ -56,6 +56,9 @@ def trim_ads (record, ad1, ad2, barlen, shift, m, elem_remove, search_win):
         ham_ad2 = hamming(ad2, seq2, m)
         if (ham_ad1)and(ham_ad2):
             barcode = record_seq[len_ad1 + i : len_ad1 + barlen + i]
+            barcode_q = [chr(x + 33) for x in record.letter_annotations['phred_quality']]
+            barcode_q = ''.join(barcode_q)
+            barcode_q = barcode_q[len_ad1 + i : len_ad1 + barlen + i]
             for elem in elem_remove:
                 if record_seq[len_ad1 + barlen + len_ad2 + i :].find(elem, 0) != -1:
                     return (info(good = False, read = None, alu_barcode = None,
@@ -65,7 +68,7 @@ def trim_ads (record, ad1, ad2, barlen, shift, m, elem_remove, search_win):
                     return (info(good = False, read = None, alu_barcode = None,
                         errors = np.array([0, 0, 0, 0, 1])))
             record = record[len_ad1 + barlen + len_ad2 + i :]
-            alu_bar = '__ab:' + str(barcode)
+            alu_bar = '__abq:' + str(barcode) + '__abq:' + str(barcode_q)
             record.description = ''
             record.name = ''
             return (info(good = True, read = record, alu_barcode = alu_bar,
