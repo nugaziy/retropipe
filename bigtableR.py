@@ -136,7 +136,7 @@ def main(inputdir, outputdir, window):
                 'CIGAR_BEST\tMDFLAG_BEST\tNUM_READS\tNUM_BARCODES\n')
             table2 = open(outputdir + table2_name, 'w')
             table2.write('CLUSTER_ID\tID_LIST\tFILENAME\tREADNAME\tCHR\tPOS\tSTRAND\tREAD1_BEST\tREAD2_BEST\tTLEN\t' + 
-                'CIGAR_BEST\tMDFLAG_BEST\tNUM_READS\tNUM_BARCODES\tALU_LIST\tALU_AMOUNT\tBARCODE_LIST\tBARCODE_AMOUNT\tBARCODE_Q\n')
+                'CIGAR_BEST\tMDFLAG_BEST\tNUM_READS\tNUM_BARCODES\tALU_LIST\tALU_AMOUNT\tBARCODE_LIST\tBARCODE_Q\n')
             data = pd.read_table(inputdir + filename)
             data_group = data.groupby(['CHR', 'STRAND'])
             cluster_id = 0
