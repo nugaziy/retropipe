@@ -59,7 +59,7 @@ def main(inputtable, primer, main_flank_len, refway, outputdir, outputtable, bwa
 
 	for read in log_progress(in_sam, name = 'Create ZaliponTable from samfile: ' + inputtablename,
 	 size = count_fastq_records(inputtable) * 4, every = 1):
-		megacluster_id = read.qname.split('__')[3]
+		megacluster_id = read.qname.split('__')[4]
 		if read.mapped:
 			for x in read._tags:
 				if re.search('MD', x):
