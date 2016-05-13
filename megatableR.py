@@ -45,18 +45,14 @@ def megaclustering(df, window, megacluster_id, chrom, strand, standart_alu, tabl
             num_barcodes_by_files = defaultdict()
             filecluster_list = defaultdict()
             barcode = defaultdict()
-            barcode_list = defaultdict()
-            barcode_amount = defaultdict()
-            barcode_current = defaultdict()
+            barcode_q = defaultdict()
             alu = []
             for i in files_name:
                 num_reads_by_files[i] = 0
                 num_barcodes_by_files[i] = 0
                 filecluster_list[i] = '0'
-                barcode[i] = ['NA']
-                barcode_list[i] = []
-                barcode_amount[i] = []
-                barcode_current[i] = []
+                barcode[i] = ['RRRRRRRRR']
+                barcode_q[i] = ['RRRRRRRRR']
             # transform alu_list and extend
             alu_list = np.asarray(row['ALU_LIST'].split(','))
             alu_amount = row['ALU_AMOUNT'].split(',')
@@ -64,11 +60,10 @@ def megaclustering(df, window, megacluster_id, chrom, strand, standart_alu, tabl
             alu_current = list(np.repeat(alu_list, alu_amount, axis = 0))
             alu.extend(alu_current)
             # transform barcode_list and extend
-            barcode_list[index[0]] = np.asarray(row['BARCODE_LIST'].split(','))
-            barcode_amount[index[0]] = row['BARCODE_AMOUNT'].split(',')
-            barcode_amount[index[0]] = [int(x) for x in barcode_amount[index[0]]]
-            barcode_current[index[0]] = list(np.repeat(barcode_list[index[0]], barcode_amount[index[0]], axis = 0))
-            barcode[index[0]].extend(barcode_current[index[0]])
+            barcode_list = re.findall('.........', row['BARCODE_LIST'])
+            barcode_list_q = re.findall('.........', row['BARCODE_Q'])
+            barcode[index[0]].extend(barcode_list)
+            barcode_q[index[0]].extend(barcode_list_q)
             ###
             megacluster_id += 1
             pos = int(row['POS'])
@@ -103,11 +98,10 @@ def megaclustering(df, window, megacluster_id, chrom, strand, standart_alu, tabl
                 alu_current = list(np.repeat(alu_list, alu_amount, axis = 0))
                 alu.extend(alu_current)
                 # transform barcode_list and extend
-                barcode_list[index[0]] = np.asarray(row['BARCODE_LIST'].split(','))
-                barcode_amount[index[0]] = row['BARCODE_AMOUNT'].split(',')
-                barcode_amount[index[0]] = [int(x) for x in barcode_amount[index[0]]]
-                barcode_current[index[0]] = list(np.repeat(barcode_list[index[0]], barcode_amount[index[0]], axis = 0))
-                barcode[index[0]].extend(barcode_current[index[0]])
+                barcode_list = re.findall('.........', row['BARCODE_LIST'])
+                barcode_list_q = re.findall('.........', row['BARCODE_Q'])
+                barcode[index[0]].extend(barcode_list)
+                barcode_q[index[0]].extend(barcode_list_q)
                 ###
                 if filecluster_list[index[0]] == '0':
                     filecluster_list[index[0]] = str(int(row['CLUSTER_ID']))
@@ -136,14 +130,8 @@ def megaclustering(df, window, megacluster_id, chrom, strand, standart_alu, tabl
                 best_pos = list(dict(Counter(pos_list).most_common(1)).keys())[0]
                 for i in files_name:
                     num_barcodes_by_files[i] = len(set(barcode[i])) - 1
-                    barcode[i] = dict(Counter(barcode[i]))
-                barcode_final = defaultdict()
-                for key, value in barcode.items():
-                    value_bc = list(value.keys())
-                    value_am = list(value.values())
-                    value_bc = ','.join(value_bc)
-                    value_am = ','.join(str(x) for x in value_am)
-                    barcode_final[key] = [value_bc, value_am]
+                    barcode[i] = ''.join(str(x) for x in barcode[i])
+                    barcode_q[i] = ''.join(str(x) for x in barcode_q[i])
                 table1.write(str(megacluster_id) + '\t' + best_fname + '\t' + best_rname + '\t' + 
                     'chr' + chrom + '\t' + str(best_pos) + '\t' + 
 strand + '\t' + alu_best['seq'] + '\t' + str(alu_best['amount']) + '\t' + str(alu_best['hamming']) + '\t' + best_read1 + '\t' +
@@ -155,24 +143,20 @@ best_read2 + '\t' + str(best_tlen) + '\t' + best_cigar + '\t' + best_mdflag + '\
 strand + '\t' + alu_best['seq'] + '\t' + str(alu_best['amount']) + '\t' + str(alu_best['hamming']) + '\t' + best_read1 + '\t' +
 best_read2 + '\t' + str(best_tlen) + '\t' + best_cigar + '\t' + best_mdflag + '\t' + 
 '\t'.join(str(num_reads_by_files[x]) + '\t' + str(num_barcodes_by_files[x]) for x in files_name) + '\t' + 
-'\t'.join(value[0] + '\t' + value[1] for key, value in barcode_final.items()) + '\n')
+'\t'.join(str(barcode[x]) + '\t' + str(barcode_q[x]) for x in files_name) + '\n')
                 is_cluster_open = True
                 num_reads_by_files = defaultdict()
                 num_barcodes_by_files = defaultdict()
                 filecluster_list = defaultdict()
                 barcode = defaultdict()
-                barcode_list = defaultdict()
-                barcode_amount = defaultdict()
-                barcode_current = defaultdict()
+                barcode_q = defaultdict()
                 alu = []
                 for i in files_name:
                     num_reads_by_files[i] = 0
                     num_barcodes_by_files[i] = 0
                     filecluster_list[i] = '0'
-                    barcode[i] = ['NA']
-                    barcode_list[i] = []
-                    barcode_amount[i] = []
-                    barcode_current[i] = []
+                    barcode[i] = ['RRRRRRRRR']
+                    barcode_q[i] = ['RRRRRRRRR']
                 # transform alu_list and extend
                 alu_list = np.asarray(row['ALU_LIST'].split(','))
                 alu_amount = row['ALU_AMOUNT'].split(',')
@@ -180,11 +164,10 @@ best_read2 + '\t' + str(best_tlen) + '\t' + best_cigar + '\t' + best_mdflag + '\
                 alu_current = list(np.repeat(alu_list, alu_amount, axis = 0))
                 alu.extend(alu_current)
                 # transform barcode_list and extend
-                barcode_list[index[0]] = np.asarray(row['BARCODE_LIST'].split(','))
-                barcode_amount[index[0]] = row['BARCODE_AMOUNT'].split(',')
-                barcode_amount[index[0]] = [int(x) for x in barcode_amount[index[0]]]
-                barcode_current[index[0]] = list(np.repeat(barcode_list[index[0]], barcode_amount[index[0]], axis = 0))
-                barcode[index[0]].extend(barcode_current[index[0]])
+                barcode_list = re.findall('.........', row['BARCODE_LIST'])
+                barcode_list_q = re.findall('.........', row['BARCODE_Q'])
+                barcode[index[0]].extend(barcode_list)
+                barcode_q[index[0]].extend(barcode_list_q)
                 ###
                 megacluster_id += 1
                 pos = int(row['POS'])
@@ -218,14 +201,8 @@ best_read2 + '\t' + str(best_tlen) + '\t' + best_cigar + '\t' + best_mdflag + '\
         best_pos = list(dict(Counter(pos_list).most_common(1)).keys())[0]
         for i in files_name:
             num_barcodes_by_files[i] = len(set(barcode[i])) - 1
-            barcode[i] = dict(Counter(barcode[i]))
-        barcode_final = defaultdict()
-        for key, value in barcode.items():
-            value_bc = list(value.keys())
-            value_am = list(value.values())
-            value_bc = ','.join(value_bc)
-            value_am = ','.join(str(x) for x in value_am)
-            barcode_final[key] = [value_bc, value_am]
+            barcode[i] = ''.join(str(x) for x in barcode[i])
+            barcode_q[i] = ''.join(str(x) for x in barcode_q[i])
         table1.write(str(megacluster_id) + '\t' + best_fname + '\t' + best_rname + '\t' + 
             'chr' + chrom + '\t' + str(best_pos) + '\t' + 
 strand + '\t' + alu_best['seq'] + '\t' + str(alu_best['amount']) + '\t' + str(alu_best['hamming']) + '\t' + best_read1 + '\t' +
@@ -237,7 +214,7 @@ best_read2 + '\t' + str(best_tlen) + '\t' + best_cigar + '\t' + best_mdflag + '\
 strand + '\t' + alu_best['seq'] + '\t' + str(alu_best['amount']) + '\t' + str(alu_best['hamming']) + '\t' + best_read1 + '\t' +
 best_read2 + '\t' + str(best_tlen) + '\t' + best_cigar + '\t' + best_mdflag + '\t' + 
 '\t'.join(str(num_reads_by_files[x]) + '\t' + str(num_barcodes_by_files[x]) for x in files_name) + '\t' + 
-'\t'.join(value[0] + '\t' + value[1] for key, value in barcode_final.items()) + '\n')
+'\t'.join(str(barcode[x]) + '\t' + str(barcode_q[x]) for x in files_name) + '\n')
     return (megacluster_id)
 
 
@@ -250,8 +227,9 @@ def main(inputdir, outputdir, outputtable, window, standart_alu):
     # Read files in folder
     onlyfiles = [f for f in listdir(inputdir) if isfile(join(inputdir, f))]
     
-    colnames = ['CLUSTER_ID', 'ID_LIST', 'FILENAME', 'READNAME', 'CHR', 'POS', 'STRAND', 'READ1_BEST', 'READ2_BEST', 'TLEN', 
-                'CIGAR_BEST', 'MDFLAG_BEST', 'NUM_READS', 'NUM_BARCODES', 'ALU_LIST', 'ALU_AMOUNT', 'BARCODE_LIST', 'BARCODE_AMOUNT']
+    colnames = ['CLUSTER_ID', 'ID_LIST', 'FILENAME', 'READNAME', 'CHR', 'POS', 'STRAND',
+     'READ1_BEST', 'READ2_BEST', 'TLEN', 'CIGAR_BEST', 'MDFLAG_BEST', 'NUM_READS', 'NUM_BARCODES',
+      'ALU_LIST', 'ALU_AMOUNT', 'BARCODE_LIST', 'BARCODE_Q']
     outputtable, ext = os.path.splitext(outputtable)
     table1 = open(outputdir + outputtable + '_humanread.txt', 'w')
     table2 = open(outputdir + outputtable + '_pcread.txt', 'w')
@@ -269,7 +247,7 @@ def main(inputdir, outputdir, outputtable, window, standart_alu):
         'FILENAME\tREADNAME\tCHR\tPOS\tSTRAND\tALU_BEST\tALU_AMOUNT\tALU_HAMMING\tREAD1_BEST\tREAD2_BEST\t' + 
         'TLEN\tCIGAR_BEST\tMDFLAG_BEST\t' + 
         '\t'.join(x + '_NUM_READS'  + '\t' + x + '_NUM_BARCODES' for x in list(start_point.keys())) + '\t' +
-        '\t'.join(x + '_BARCODE_LIST'  + '\t' + x + '_BARCODE_AMOUNT' for x in list(start_point.keys())) + '\t' + '\n')
+        '\t'.join(x + '_BARCODE_LIST' + '\t' + x + '_BARCODE_Q' for x in list(start_point.keys())) + '\t' + '\n')
     megacluster_id = 0
     chromline = list(range(1, 23))
     chromline.append('X')
