@@ -29,23 +29,24 @@ def main(inputtable, referencefile, window, k_min, k_max, outputdir, outputtable
 	table = open(outputdir + outputtable, 'w')
 	table.write('KMER' + '\t' + 'AMOUNT' + '\n')
 
-	kmer = [	]
+	kmer = []
 	for index, row in log_progress(megatable.iterrows(), name = inputtable, every = 250, size = len(megatable)):
-		pos = int(row['POS'])
-		if row['STRAND'] == '+':
-			start = pos + 1
-			end = pos + window
-			seq = Seq(reference.fetch(row['CHR'], start, end))
-			seq = seq.reverse_complement()
-			seq = str(seq).upper()
-		else:
-			start = pos - window
-			end = pos - 1
-			seq = reference.fetch(row['CHR'], start, end)
-			seq = seq.upper()
-		for i in range(k_min, k_max + 1):
-			for j in range(len(seq) - i):
-					kmer.append(seq[j : j + i])
+		if (str(row['Alu_hg38']) == 'Unknown') and (str(row['Alu_dbRIP_hg38']) == 'Unknown'):
+			pos = int(row['POS'])
+			if row['STRAND'] == '+':
+				start = pos + 1
+				end = pos + window
+				seq = Seq(reference.fetch(row['CHR'], start, end))
+				seq = seq.reverse_complement()
+				seq = str(seq).upper()
+			else:
+				start = pos - window
+				end = pos - 1
+				seq = reference.fetch(row['CHR'], start, end)
+				seq = seq.upper()
+			for i in range(k_min, k_max + 1):
+				for j in range(len(seq) - i):
+						kmer.append(seq[j : j + i])
 	kmer_count = dict(Counter(kmer))
 	for key, value in kmer_count.items():
 		table.write(str(key) + '\t' + str(value) + '\n')
