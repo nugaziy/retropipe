@@ -9,9 +9,6 @@ from os.path import isfile, join
 from scipy.stats import gaussian_kde
 import numpy as np
 import networkx as nx
-import matplotlib
-import matplotlib.pyplot as plt
-import math
 
 def hamming (x1, x2):
 	j = 0
