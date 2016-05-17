@@ -52,7 +52,7 @@ def main(inputtable_pcread, inputtable_for_output, outputdir, outputtable):
 				for j in range(i + 1, len(barcode)):
 					G.add_node(barcode[j])
 					if hamming(barcode[i],  barcode[j]) == 1:
-						G.add_ege(barcode[i], barcode[j])
+						G.add_edge(barcode[i], barcode[j])
 			scc_len = [len(x) for x in list(nx.connected_components(G))]
 			scc.append(len(scc_len))
 		mask = []
