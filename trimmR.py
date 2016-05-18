@@ -31,18 +31,18 @@ def trim_primers (record, primer, shift, m, elem_remove, search_win):
             for elem in elem_remove:
                 if record_seq[len_primer + 6 + i :].find(elem, 0) != -1:
                     return (info(good = False, read = None, alu_barcode = None,
-                            errors = np.array([0, 0, 0, 1, 0])))
+                            errors = np.array([0, 0, 0, 1, 0, 0])))
             if record_seq[len_primer + 6 + i : len_primer + 6 + i + search_win].find(pr_elem_remove, 0) != -1:
                     return (info(good = False, read = None, alu_barcode = None,
-                            errors = np.array([0, 0, 0, 0, 1])))
+                            errors = np.array([0, 0, 0, 0, 1, 0])))
             record = record[len_primer + 6 + i :]
             alu_bar = '__abq:' + str(alu)
             record.description = ''
             record.name = ''
             return (info(good = True, read = record, alu_barcode = alu_bar,
-                    errors = np.array([0, 0, 0, 0, 0])))
+                    errors = np.array([0, 0, 0, 0, 0, 0])))
     return (info(good = False, read = None, alu_barcode = None,
-                errors = np.array([1, 0, 0, 0, 0])))
+                errors = np.array([1, 0, 0, 0, 0, 0])))
 
 def trim_ads (record, ad1, ad2, barlen, shift, m, elem_remove, search_win):
     record_seq = record.seq
@@ -62,26 +62,30 @@ def trim_ads (record, ad1, ad2, barlen, shift, m, elem_remove, search_win):
             for elem in elem_remove:
                 if record_seq[len_ad1 + barlen + len_ad2 + i :].find(elem, 0) != -1:
                     return (info(good = False, read = None, alu_barcode = None,
-                            errors = np.array([0, 0, 0, 1, 0])))
+                            errors = np.array([0, 0, 0, 1, 0, 0])))
             for ad_elem in ad_elem_remove:
                 if record_seq[len_ad1 + barlen + len_ad2 + i : len_ad1 + barlen + len_ad2 + i + search_win].find(ad_elem, 0) != -1:
                     return (info(good = False, read = None, alu_barcode = None,
-                        errors = np.array([0, 0, 0, 0, 1])))
+                        errors = np.array([0, 0, 0, 0, 1, 0])))
             record = record[len_ad1 + barlen + len_ad2 + i :]
             alu_bar = '__abq:' + str(barcode) + '__abq:' + str(barcode_q)
             record.description = ''
             record.name = ''
-            return (info(good = True, read = record, alu_barcode = alu_bar,
-                    errors = np.array([0, 0, 0, 0, 0])))
+            if record_seq[len_ad1 + barlen + len_ad2 + i : len_ad1 + barlen + len_ad2 + i + 2] == 'CT':
+                return (info(good = True, read = record, alu_barcode = alu_bar,
+                        errors = np.array([0, 0, 0, 0, 0, 0])))
+            else:
+                mb_return = info(good = False, read = None, alu_barcode = None,
+                    errors = np.array([0, 0, 0, 0, 0, 1]))
         elif not((ham_ad1)or(ham_ad2)):
             mb_return = info(good = False, read = None, alu_barcode = None,
-                    errors = np.array([0, 1, 1, 0, 0]))
+                    errors = np.array([0, 1, 1, 0, 0, 0]))
         elif not(ham_ad1):
             mb_return = info(good = False, read = None, alu_barcode = None,
-                    errors = np.array([0, 1, 0, 0, 0]))
+                    errors = np.array([0, 1, 0, 0, 0, 0]))
         else:
             mb_return = info(good = False, read = None, alu_barcode = None,
-                    errors = np.array([0, 0, 1, 0, 0]))
+                    errors = np.array([0, 0, 1, 0, 0, 0]))
     return (mb_return)
 
 
@@ -111,10 +115,10 @@ def trim_reads(filename1, filename2, inputdir, outputdir, shift,
     original_R1_reads = SeqIO.parse(inputdir + filename1, "fastq")
     original_R2_reads = SeqIO.parse(inputdir + filename2, "fastq")
     
-    count = np.array([0, 0, 0, 0, 0])
-    elem = ('primer', 'ad', 'green', 'flank_simple', 'flank_strange')
+    count = np.array([0, 0, 0, 0, 0, 0])
+    elem = ('primer', 'ad', 'green', 'flank_simple', 'flank_strange', 'non_ct')
     count_reads = {'readname':readsname, 'all':0, 'good':0, 'bad':0, 'primer':0, 'ad':0, 'green':0, 'flank_simple':0,
-    'flank_strange':0}
+    'flank_strange':0, 'non_ct':0}
     for r1, r2 in log_progress(zip(original_R1_reads, original_R2_reads), name = readsname, size = count_fastq_records(inputdir + filename1), every = 250):
         count_reads['all'] += 1
         fr1 = trim_primers(r1, primer, shift, mist1, elem_remove, search_win)
@@ -147,6 +151,7 @@ def trim_reads(filename1, filename2, inputdir, outputdir, shift,
     count_reads['green'] = count[2]
     count_reads['flank_simple'] = count[3]
     count_reads['flank_strange'] = count[4]
+    count_reads['non_ct'] = count[5]
     
     count_reads['good'] = round((count_reads['good'] / count_reads['all']), 2)
     count_reads['bad'] = round((1 - count_reads['good']), 2)
@@ -162,7 +167,7 @@ def trim_reads(filename1, filename2, inputdir, outputdir, shift,
 
 
 def main(inputdir, outputdir, shift,
- mist1, mist2, primer, ad1, ad2, barlen, elem_remove, search_win):
+ mist1, mist2, primer, ad1, ad2, barlen, elem_remove, search_win, statfilename):
     inputdir += "/"
     outputdir += "/"
 
@@ -195,9 +200,9 @@ def main(inputdir, outputdir, shift,
     if not os.path.exists(outputdir):
         os.makedirs(outputdir)
     
-    statistics = open(outputdir + 'statistics.txt', 'w')
+    statistics = open(outputdir + statfilename, 'w')
     statistics.write('readname\t' + 'reads\t' + 'good.pt\t' + 'bad.pt\t' + 'primer\t' + 'ad\t' + 'green\t' + 'flank_simple\t' + 
-        'flank_strange\n')
+        'flank_strange' + '\t' + 'non_ct\n')
 
     '''
     # Setup a list of processes that we want to run
@@ -265,15 +270,16 @@ def main(inputdir, outputdir, shift,
         stat_out = trim_reads(filename1, filename2, inputdir, outputdir, shift,
  mist1, mist2, primer, ad1, ad2, barlen, elem_remove, search_win)
         statistics.write("\t".join([stat_out['readname'], 
-                                   str(stat_out['all']), 
-                                   str(stat_out['good']),
-                                   str(stat_out['bad']),
-                                   str(stat_out['primer']),
-                                   str(stat_out['ad']),
-                                   str(stat_out['green']),
-                                   str(stat_out['flank_simple']),
-                                   str(stat_out['flank_strange'])]) +
-                                   '\n')
+                                    str(stat_out['all']), 
+                                    str(stat_out['good']),
+                                    str(stat_out['bad']),
+                                    str(stat_out['primer']),
+                                    str(stat_out['ad']),
+                                    str(stat_out['green']),
+                                    str(stat_out['flank_simple']),
+                                    str(stat_out['flank_strange']),
+                                    str(stat_out['non_ct'])]) + 
+                                    '\n')
 
     statistics.close()
     
