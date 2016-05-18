@@ -5,7 +5,7 @@ from os import listdir
 from os.path import isfile, join
 from utils import *
 
-def main(inputtable, inputlibrary, outputdir, outputtable, inswindow, readwindow):
+def main(inputtable, inputlibrary, outputdir, outputtable, inswindow, readwindow, is_dinamic_window):
 	inputlibrary += "/"
 	outputdir += "/"
 
@@ -19,12 +19,17 @@ def main(inputtable, inputlibrary, outputdir, outputtable, inswindow, readwindow
 	megatable_group = megatable.groupby(['CHR', 'STRAND'])
 	tree_dict = {}
 	for name, group in  log_progress(megatable_group, name = 'Create tree_list with', every = 1, who = 'classes: chrom & strand'):
-		if name[1] == '+':
-			start_group = [x - readwindow for x in list(group['POS'])]
-			end_group = [x + inswindow for x in list(group['POS'])]
+		if is_dinamic_window:
+			readwindow_list = [int(0.9 * x) for x in list(group['TLEN'])]
 		else:
-			start_group = [x - inswindow for x in list(group['POS'])]
-			end_group = [x + readwindow for x in list(group['POS'])]
+			readwindow_list = [readwindow for x in list(group['TLEN'])]
+		inswindow_list = [inswindow for x in list(group['TLEN'])]
+		if name[1] == '+':
+			start_group = [pos - read_w for read_w, pos in zip(readwindow_list, list(group['POS']))]
+			end_group = [pos + ins_w for ins_w, pos in zip(inswindow_list, list(group['POS']))]
+		else:
+			start_group = [pos - ins_w for ins_w, pos in zip(inswindow_list, list(group['POS']))]
+			end_group = [pos + read_w for read_w, pos in zip(readwindow_list, list(group['POS']))]
 		tree_dict[name[0] + name[1]] = it.IntervalTree(it.Interval(start, end, data)
 		 for start, end, data in zip(start_group, end_group, list(group['MEGACLUSTER_ID'])))
 
