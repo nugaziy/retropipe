@@ -48,14 +48,19 @@ def main(inputtable_pcread, inputtable_for_output, outputdir, outputtable):
 				barcode_list.remove('RRRRRRRRR')
 				barcode = list(set(barcode_list))
 				barcode_cluster.append(barcode)
-				G = nx.Graph()
-				for i in range(len(barcode) - 1):
-					G.add_node(barcode[i])
-					for j in range(i + 1, len(barcode)):
-						G.add_node(barcode[j])
-						if hamming(barcode[i],  barcode[j]) == 1:
-							G.add_edge(barcode[i], barcode[j])
-				scc_len = [len(x) for x in list(nx.connected_components(G))]
+				if len(barcode) > 1:
+					G = nx.Graph()
+					for i in range(len(barcode) - 1):
+						G.add_node(barcode[i])
+						for j in range(i + 1, len(barcode)):
+							G.add_node(barcode[j])
+							if hamming(barcode[i],  barcode[j]) == 1:
+								G.add_edge(barcode[i], barcode[j])
+					scc_len = [len(x) for x in list(nx.connected_components(G))]
+				elif len(barcode) == 1:
+					scc_len = [1]
+				else:
+					scc_len = []
 				scc.append(len(scc_len))
 			scc = [str(x) for x in scc]
 			for i in range(len(barcode_col)):
