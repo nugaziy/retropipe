@@ -15,8 +15,8 @@ def recovery(df, inputdirfq, filename1, filename2, name):
 	for r1, r2 in log_progress(zip(R1_reads, R2_reads),
      name = name, size = count_fastq_records(inputdirfq + filename1), every = 250):
 		if r1.id in df['READNAME']:
-			df.set_value(r1.id, 'READ1', r1.seq)
-			df.set_value(r1.id, 'READ2', r2.seq)
+			df.set_value(r1.id, 'READ1_BEST', r1.seq)
+			df.set_value(r2.id, 'READ2_BEST', r2.seq)
 	df = df.set_index(df_index)
 	return (df)
 
