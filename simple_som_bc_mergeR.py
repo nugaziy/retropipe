@@ -39,39 +39,39 @@ def main(inputtable_pcread, inputtable_for_output, outputdir, outputtable):
 		megatable_output.insert(nmbr_scc, col + '_REAL_NUM_BARCODE', ['*' for x in range(len(megatable))])
 		megatable_output.insert(nmbr_mask, col + '_BARCODE_MASK', ['*' for x in range(len(megatable))])
 	for index, row in log_progress(megatable.iterrows(), name = inputtable_pcread, every = 250, size = len(megatable)):
-		#if (megatable_output.Alu_hg38[int(row['MEGACLUSTER_ID'])] == 'Unknown') and (megatable_output.Alu_dbRIP_hg38[int(row['MEGACLUSTER_ID'])] == 'Unknown'):
-		scc = []
-		mask = []
-		barcode_cluster = []
-		for col in barcode_col:
-			barcode_list = re.findall(r'.........', row[col + '_BARCODE_LIST'])
-			barcode_list.remove('RRRRRRRRR')
-			barcode = list(set(barcode_list))
-			barcode_cluster.append(barcode)
-			if len(barcode) > 1:
-				G = nx.Graph()
-				for i in range(len(barcode) - 1):
-					G.add_node(barcode[i])
-					for j in range(i + 1, len(barcode)):
-						G.add_node(barcode[j])
-						if hamming(barcode[i],  barcode[j]) == 1:
-							G.add_edge(barcode[i], barcode[j])
-				scc_len = [len(x) for x in list(nx.connected_components(G))]
-			elif len(barcode) == 1:
-				scc_len = [1]
-			else:
-				scc_len = []
-			scc.append(len(scc_len))
-		scc = [str(x) for x in scc]
-		for i in range(len(barcode_col)):
-			mask_col = []
-			for j in range(len(barcode_col)):
-				mask_col.append(len(list(set(barcode_cluster[i]).intersection(barcode_cluster[j]))))
-			mask_col = ','.join(str(x) for x in mask_col)
-			mask.append(mask_col)
-		for i in range(len(barcode_col)):
-			megatable_output.set_value(int(row['MEGACLUSTER_ID']), barcode_col[i] + '_REAL_NUM_BARCODE', scc[i])
-			megatable_output.set_value(int(row['MEGACLUSTER_ID']), barcode_col[i] + '_BARCODE_MASK', mask[i])
+		if (megatable_output.Alu_hg38[int(row['MEGACLUSTER_ID'])] == 'Unknown') and (megatable_output.Alu_dbRIP_hg38[int(row['MEGACLUSTER_ID'])] == 'Unknown'):
+			scc = []
+			mask = []
+			barcode_cluster = []
+			for col in barcode_col:
+				barcode_list = re.findall(r'.........', row[col + '_BARCODE_LIST'])
+				barcode_list.remove('RRRRRRRRR')
+				barcode = list(set(barcode_list))
+				barcode_cluster.append(barcode)
+				if len(barcode) > 1:
+					G = nx.Graph()
+					for i in range(len(barcode) - 1):
+						G.add_node(barcode[i])
+						for j in range(i + 1, len(barcode)):
+							G.add_node(barcode[j])
+							if hamming(barcode[i],  barcode[j]) == 1:
+								G.add_edge(barcode[i], barcode[j])
+					scc_len = [len(x) for x in list(nx.connected_components(G))]
+				elif len(barcode) == 1:
+					scc_len = [1]
+				else:
+					scc_len = []
+				scc.append(len(scc_len))
+			scc = [str(x) for x in scc]
+			for i in range(len(barcode_col)):
+				mask_col = []
+				for j in range(len(barcode_col)):
+					mask_col.append(len(list(set(barcode_cluster[i]).intersection(barcode_cluster[j]))))
+				mask_col = ','.join(str(x) for x in mask_col)
+				mask.append(mask_col)
+			for i in range(len(barcode_col)):
+				megatable_output.set_value(int(row['MEGACLUSTER_ID']), barcode_col[i] + '_REAL_NUM_BARCODE', scc[i])
+				megatable_output.set_value(int(row['MEGACLUSTER_ID']), barcode_col[i] + '_BARCODE_MASK', mask[i])
 	table = open(outputdir + outputtable, 'w')
 	table.close()
 	megatable_output.to_csv(outputdir + outputtable, index=None, sep='\t', mode='a')
