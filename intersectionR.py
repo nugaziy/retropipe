@@ -14,7 +14,6 @@ def main(inputtable, inputlibrary, outputdir, outputtable, inswindow, readwindow
 
 	onlyfiles = [f for f in listdir(inputlibrary) if isfile(join(inputlibrary, f))]
 	megatable = pd.read_table(inputtable)
-	megatable_id = list(megatable['MEGACLUSTER_ID'])
 
 	megatable_group = megatable.groupby(['CHR', 'STRAND'])
 	tree_dict = {}
@@ -33,10 +32,13 @@ def main(inputtable, inputlibrary, outputdir, outputtable, inswindow, readwindow
 		tree_dict[name[0] + name[1]] = it.IntervalTree(it.Interval(start, end, data)
 		 for start, end, data in zip(start_group, end_group, list(group['MEGACLUSTER_ID'])))
 
+		megatable_id = megatable['MEGACLUSTER_ID']
+		megatable = megatable.set_index(megatable_id)
+
 	for filename in onlyfiles:
-		repcolumn = {x : 'Unknown' for x in megatable_id}
 		filename = filename.rstrip()
 		inputfile, ext = os.path.splitext(filename)
+		megatable[inputfile] = pd.Series(['Unknown' for x in range(len(megatable))], index = megatable_id)
 		replib = pd.read_table(inputlibrary + filename)
 		replib_group = replib.groupby(['CHR', 'STRAND'])
 		for name, group in log_progress(replib_group, name = 'For lib - ' + inputfile, every = 1, who = 'classes: chrom & strand'):
@@ -49,10 +51,7 @@ def main(inputtable, inputlibrary, outputdir, outputtable, inswindow, readwindow
 					finter = tree_dict[name[0] + name[1]][pos]
 					if len(finter) > 0:
 						for x in finter:
-							repcolumn[x.data] = repname
-		repcolumn = {inputfile : list(repcolumn.values())}
-		repcolumn_df = pd.DataFrame(repcolumn)
-		megatable = megatable.join(repcolumn_df)
+							megatable.set_value(x.data, inputfile, repname)
 	table = open(outputdir + outputtable, 'w')
 	table.close()
 	megatable.to_csv(outputdir + outputtable, index=None, sep='\t', mode='a')
