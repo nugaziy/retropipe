@@ -44,7 +44,7 @@ def trim_primers (record, primer, shift, m, elem_remove, search_win):
     return (info(good = False, read = None, alu_barcode = None,
                 errors = np.array([1, 0, 0, 0, 0, 0])))
 
-def trim_ads (record, ad1, ad2, barlen, shift, m, elem_remove, search_win):
+def trim_ads (record, ad1, ad2, barlen, shift, m, elem_remove, search_win, r2_start):
     record_seq = record.seq
     len_ad1 = len(ad1)
     len_ad2 = len(ad2)
@@ -71,7 +71,7 @@ def trim_ads (record, ad1, ad2, barlen, shift, m, elem_remove, search_win):
             alu_bar = '__abq:' + str(barcode) + '__abq:' + str(barcode_q)
             record.description = ''
             record.name = ''
-            if record_seq[len_ad1 + barlen + len_ad2 + i : len_ad1 + barlen + len_ad2 + i + 2] == 'CT':
+            if record_seq[len_ad1 + barlen + len_ad2 + i : len_ad1 + barlen + len_ad2 + i + len(r2_start)] == r2_start:
                 return (info(good = True, read = record, alu_barcode = alu_bar,
                         errors = np.array([0, 0, 0, 0, 0, 0])))
             else:
@@ -100,7 +100,7 @@ def concate(x1, x2):
 
 
 def trim_reads(filename1, filename2, inputdir, outputdir, shift,
- mist1, mist2, primer, ad1, ad2, barlen, elem_remove, search_win):
+ mist1, mist2, primer, ad1, ad2, barlen, elem_remove, search_win, r2_start):
     readsname = filename1.split('R1')[0]
     readsname = readsname.rsplit('.', 1)[0]
     
@@ -123,7 +123,7 @@ def trim_reads(filename1, filename2, inputdir, outputdir, shift,
         count_reads['all'] += 1
         fr1 = trim_primers(r1, primer, shift, mist1, elem_remove, search_win)
         if fr1.good:
-            fr2 = trim_ads(r2, ad1, ad2, barlen, shift, mist2, elem_remove, search_win)
+            fr2 = trim_ads(r2, ad1, ad2, barlen, shift, mist2, elem_remove, search_win, r2_start)
             if fr2.good:
                 count_reads['good'] += 1
                 fr1.read.id += fr1.alu_barcode + fr2.alu_barcode
@@ -167,7 +167,7 @@ def trim_reads(filename1, filename2, inputdir, outputdir, shift,
 
 
 def main(inputdir, outputdir, shift,
- mist1, mist2, primer, ad1, ad2, barlen, elem_remove, search_win, statfilename):
+ mist1, mist2, primer, ad1, ad2, barlen, elem_remove, search_win, statfilename, r2_start):
     inputdir += "/"
     outputdir += "/"
 
@@ -268,7 +268,7 @@ def main(inputdir, outputdir, shift,
 
         '''
         stat_out = trim_reads(filename1, filename2, inputdir, outputdir, shift,
- mist1, mist2, primer, ad1, ad2, barlen, elem_remove, search_win)
+ mist1, mist2, primer, ad1, ad2, barlen, elem_remove, search_win, r2_start)
         statistics.write("\t".join([stat_out['readname'], 
                                     str(stat_out['all']), 
                                     str(stat_out['good']),
