@@ -35,20 +35,20 @@ def main(inputtable, inputlibraryfile, outputdir, outputtable):
 	inputfile, ext = os.path.splitext(inputlibraryfile)
 	megatable[inputfile] = pd.Series(['Unknown' for x in range(len(megatable))], index = megatable_id)
 	megatable[inputfile + '_DIV'] = pd.Series([0 for x in range(len(megatable))], index = megatable_id)
-	megatable[inputfile + '_OVERLAP'] = pd.Series([0 for x in range(len(megatable))], index = megatable_id)
+	megatable[inputfile + '_OVERLAP'] = pd.Series([0.0 for x in range(len(megatable))], index = megatable_id)
 	megatable[inputfile + '_STRAND'] = pd.Series(['*' for x in range(len(megatable))], index = megatable_id)
 
 	replib = pd.read_table(inputlibraryfile)
 	replib_group = replib.groupby(['CHR'])
 	for name, group in log_progress(replib_group, name = 'For lib - ' + inputfile, every = 1, who = 'classes: chrom & strand'):
 		for strand_i in ['+', '-']:
-			if name[0] + strand_i in tree_dict:
-				rep_int = zip(list(group['START']), list(group['END']), list(group['NAME']), group['DIV'], group['STRAND'])
+			if name + strand_i in tree_dict:
+				rep_int = zip(list(group['START']), list(group['END']), zip(list(group['NAME']), list(group['DIV']), list(group['STRAND'])))
 				for begin, end, rep_data in rep_int:
-					finter = tree_dict[name[0] + strand_i][begin:end]
+					finter = tree_dict[name + strand_i][begin:end]
 					if len(finter) > 0:
 						for x in finter:
-							overlap = getOverlap([x.begin, x.end], [begin, end]) / (x.end - x.begin - 1)
+							overlap = getOverlap([x.begin, x.end], [begin, end]) / (x.end - x.begin)
 							if megatable[inputfile][x.data] == 'Unknown':
 								megatable.set_value(x.data, inputfile, rep_data[0])
 								megatable.set_value(x.data, inputfile + '_DIV', rep_data[1])
@@ -62,4 +62,5 @@ def main(inputtable, inputlibraryfile, outputdir, outputtable):
 									megatable.set_value(x.data, inputfile + '_STRAND', rep_data[2])
 	table = open(outputdir + outputtable, 'w')
 	table.close()
+	print(megatable)
 	megatable.to_csv(outputdir + outputtable, index=None, sep='\t', mode='a')
