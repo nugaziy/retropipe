@@ -25,15 +25,15 @@ def main(inputtable, inputlibrary, outputdir, outputtable, inswindow, readwindow
 		inswindow_list = [inswindow for x in list(group['TLEN'])]
 		if name[1] == '+':
 			start_group = [pos - read_w for read_w, pos in zip(readwindow_list, list(group['POS']))]
-			end_group = [pos + ins_w for ins_w, pos in zip(inswindow_list, list(group['POS']))]
+			end_group = [pos + ins_w + 1 for ins_w, pos in zip(inswindow_list, list(group['POS']))]
 		else:
 			start_group = [pos - ins_w for ins_w, pos in zip(inswindow_list, list(group['POS']))]
-			end_group = [pos + read_w for read_w, pos in zip(readwindow_list, list(group['POS']))]
+			end_group = [pos + read_w + 1 for read_w, pos in zip(readwindow_list, list(group['POS']))]
 		tree_dict[name[0] + name[1]] = it.IntervalTree(it.Interval(start, end, data)
 		 for start, end, data in zip(start_group, end_group, list(group['MEGACLUSTER_ID'])))
 
-		megatable_id = megatable['MEGACLUSTER_ID']
-		megatable = megatable.set_index(megatable_id)
+	megatable_id = megatable['MEGACLUSTER_ID']
+	megatable = megatable.set_index(megatable_id)
 
 	for filename in onlyfiles:
 		filename = filename.rstrip()
