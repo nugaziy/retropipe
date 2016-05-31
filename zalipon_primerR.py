@@ -33,13 +33,13 @@ def main(inputtable, referencefile, primer, window, outputdir, outputtable):
 		k += 1
 		pos = int(row['POS'])
 		if row['STRAND'] == '+':
-			start = pos + 1
+			start = pos
 			end = pos + window
 			seq = Seq(reference.fetch(row['CHR'], start, end))
 			seq = seq.reverse_complement()
 			seq = str(seq).upper()
 		else:
-			start = pos - window
+			start = pos - window - 1
 			end = pos - 1
 			seq = reference.fetch(row['CHR'], start, end)
 			seq = seq.upper()
@@ -85,7 +85,7 @@ def main(inputtable, referencefile, primer, window, outputdir, outputtable):
 	str(mismatch) + '\t' + str(insertion) + '\t' + str(deletion) + '\t' + str(ham) + '\n')
 		'''
 		score = []
-		for i in range(len(seq) - len(primer)):
+		for i in range(len(seq) - len(primer) + 1):
 			seq_new = seq[i : len(primer) + i]
 			score.append(hamming(seq_new, primer))
 		ham = min(score)

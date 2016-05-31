@@ -34,13 +34,13 @@ def main(inputtable, referencefile, window, k_min, k_max, outputdir, outputtable
 		if (str(row['Alu_hg38']) == 'Unknown') and (str(row['Alu_dbRIP_hg38']) == 'Unknown'):
 			pos = int(row['POS'])
 			if row['STRAND'] == '+':
-				start = pos + 1
+				start = pos
 				end = pos + window
 				seq = Seq(reference.fetch(row['CHR'], start, end))
 				seq = seq.reverse_complement()
 				seq = str(seq).upper()
 			else:
-				start = pos - window
+				start = pos - window - 1
 				end = pos - 1
 				seq = reference.fetch(row['CHR'], start, end)
 				seq = seq.upper()
