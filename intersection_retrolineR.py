@@ -62,5 +62,4 @@ def main(inputtable, inputlibraryfile, outputdir, outputtable):
 									megatable.set_value(x.data, inputfile + '_STRAND', rep_data[2])
 	table = open(outputdir + outputtable, 'w')
 	table.close()
-	print(megatable)
 	megatable.to_csv(outputdir + outputtable, index=None, sep='\t', mode='a')
