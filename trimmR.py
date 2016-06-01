@@ -19,6 +19,15 @@ def hamming (x1, x2, m):
                 return (False)
     return (True)
 
+def is_r1 (record, primer, shift, m):
+	record_seq = record.seq
+	len_primer = len(primer)
+	for i in range(shift):
+		ham_prim = hamming(primer, record_seq[i : len_primer + i], m)
+		if ham_prim:
+			return (True)
+	return (False)
+
 def trim_primers (record, primer, shift, m, elem_remove, search_win):
     #test
     record_seq = record.seq
@@ -100,7 +109,7 @@ def concate(x1, x2):
 
 
 def trim_reads(filename1, filename2, inputdir, outputdir, shift,
- mist1, mist2, primer, ad1, ad2, barlen, elem_remove, search_win, r2_start):
+ mist1, mist2, primer, ad1, ad2, barlen, elem_remove, search_win, r2_start, chaos):
     readsname = filename1.split('R1')[0]
     readsname = readsname.rsplit('.', 1)[0]
     
@@ -121,9 +130,19 @@ def trim_reads(filename1, filename2, inputdir, outputdir, shift,
     'flank_strange':0, 'non_ct':0}
     for r1, r2 in log_progress(zip(original_R1_reads, original_R2_reads), name = readsname, size = count_fastq_records(inputdir + filename1), every = 250):
         count_reads['all'] += 1
-        fr1 = trim_primers(r1, primer, shift, mist1, elem_remove, search_win)
+        if chaos:
+        	if is_r1(r1, primer, shift, mist1):
+        		rx1 = r1
+        		rx2 = r2
+        	else:
+        		rx1 = r2
+        		rx2 = r1
+        else:
+        	rx1 = r1
+        	rx2 = r2
+        fr1 = trim_primers(rx1, primer, shift, mist1, elem_remove, search_win)
         if fr1.good:
-            fr2 = trim_ads(r2, ad1, ad2, barlen, shift, mist2, elem_remove, search_win, r2_start)
+            fr2 = trim_ads(rx2, ad1, ad2, barlen, shift, mist2, elem_remove, search_win, r2_start)
             if fr2.good:
                 count_reads['good'] += 1
                 fr1.read.id += fr1.alu_barcode + fr2.alu_barcode
@@ -131,14 +150,14 @@ def trim_reads(filename1, filename2, inputdir, outputdir, shift,
                 goodr1.write(fr1.read.format('fastq'))
                 goodr2.write(fr2.read.format('fastq'))
             else:
-                r2.description += ' reason:' + concate(elem, (np.char.mod('%d', fr2.errors)))
-                badr1.write(r1.format('fastq'))
-                badr2.write(r2.format('fastq'))
+                rx2.description += ' reason:' + concate(elem, (np.char.mod('%d', fr2.errors)))
+                badr1.write(rx1.format('fastq'))
+                badr2.write(rx2.format('fastq'))
                 count = np.sum([count, fr2.errors], axis=0)
         else:
-            r2.description += ' reason:' + concate(elem, (np.char.mod('%d', fr1.errors)))
-            badr1.write(r1.format('fastq'))
-            badr2.write(r2.format('fastq'))
+            rx2.description += ' reason:' + concate(elem, (np.char.mod('%d', fr1.errors)))
+            badr1.write(rx1.format('fastq'))
+            badr2.write(rx2.format('fastq'))
             count = np.sum([count, fr1.errors], axis=0)
     
     goodr1.close()
@@ -167,7 +186,7 @@ def trim_reads(filename1, filename2, inputdir, outputdir, shift,
 
 
 def main(inputdir, outputdir, shift,
- mist1, mist2, primer, ad1, ad2, barlen, elem_remove, search_win, statfilename, r2_start):
+ mist1, mist2, primer, ad1, ad2, barlen, elem_remove, search_win, statfilename, r2_start, chaos):
     inputdir += "/"
     outputdir += "/"
 
@@ -268,7 +287,7 @@ def main(inputdir, outputdir, shift,
 
         '''
         stat_out = trim_reads(filename1, filename2, inputdir, outputdir, shift,
- mist1, mist2, primer, ad1, ad2, barlen, elem_remove, search_win, r2_start)
+ mist1, mist2, primer, ad1, ad2, barlen, elem_remove, search_win, r2_start, chaos)
         statistics.write("\t".join([stat_out['readname'], 
                                     str(stat_out['all']), 
                                     str(stat_out['good']),
