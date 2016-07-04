@@ -8,16 +8,17 @@ from os import listdir
 from os.path import isfile, join
 from scipy.stats import gaussian_kde
 import numpy as np
+import networkx as nx
 
 def hamming (x1, x2):
-    j = 0
-    for i in range(len(x1)):
-        if x1[i] != x2[i]:
-            j += 1
-    if j > 1:
-    	return(0)
-    else:
-    	return (1)
+	j = 0
+	for i in range(len(x1)):
+		if x1[i] != x2[i]:
+			j += 1
+	if j > 1:
+		return(0)
+	else:
+		return (1)
 
 def which (rowsum):
 	for x in rowsum:
